@@ -109,25 +109,10 @@ spec:
         repoVisibility: public
 
     # -------------------------------------------------------------------------
-    # 5. Bootstrap ArgoCD Application — creates only the application namespace.
-    #    Namespace is a cluster-scoped resource so ArgoCD can create it without
-    #    the destination namespace pre-existing. The main app (step 6) will
-    #    retry until this namespace is ready.
-    # -------------------------------------------------------------------------
-    - id: create-namespace-app
-      name: Create Namespace (ArgoCD Bootstrap App)
-      action: argocd:create-resources
-      input:
-        appName: ${{ parameters.appName }}-bootstrap
-        argoInstance: default
-        namespace: openshift-gitops
-        repoUrl: https://github.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-k8.git
-        path: k8/bootstrap
-        labelValue: ${{ parameters.appName }}
-
-    # -------------------------------------------------------------------------
-    # 6. Main ArgoCD Application — deploys all app resources into the namespace
-    #    created by the bootstrap app above.
+    # 5. Create ArgoCD Application using the built-in 'default' AppProject.
+    #    The default project has clusterResourceWhitelist: [*/*], so ArgoCD
+    #    can create the Namespace resource from k8/gitops/namespace.yaml before
+    #    syncing the namespace-scoped resources into it.
     # -------------------------------------------------------------------------
     - id: create-argocd-app
       name: Create ArgoCD Application
@@ -139,9 +124,10 @@ spec:
         repoUrl: https://github.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-k8.git
         path: k8/gitops
         labelValue: ${{ parameters.appName }}
+        projectName: default
 
     # -------------------------------------------------------------------------
-    # 7. Register the catalog component from the code repo's catalog-info.yaml
+    # 6. Register the catalog component from the code repo's catalog-info.yaml
     # -------------------------------------------------------------------------
     - id: register-catalog
       name: Register in Backstage Catalog
