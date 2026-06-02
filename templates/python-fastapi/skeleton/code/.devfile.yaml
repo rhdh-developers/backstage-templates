@@ -1,0 +1,65 @@
+schemaVersion: 2.2.0
+metadata:
+  name: ${{ values.appName }}
+  displayName: ${{ values.appName }} – Python FastAPI
+  description: OpenShift Dev Spaces environment for ${{ values.appName }}
+  language: Python
+  projectType: FastAPI
+
+attributes:
+  controller.devfile.io/storage-type: per-workspace
+
+projects:
+  - name: ${{ values.appName }}-code
+    git:
+      remotes:
+        origin: https://github.com/${{ values.githubOrg }}/${{ values.appName }}-code.git
+      checkoutFrom:
+        revision: main
+
+components:
+  - name: python
+    container:
+      image: registry.access.redhat.com/ubi9/python-311:latest
+      env:
+        - name: GITHUB_TOKEN
+          value: "$(GITHUB_TOKEN)"
+      memoryLimit: 512Mi
+      mountSources: true
+      volumeMounts:
+        - name: pip-cache
+          path: /home/user/.cache/pip
+
+volumes:
+  - name: pip-cache
+
+commands:
+  - id: install-deps
+    exec:
+      component: python
+      commandLine: pip install -r requirements.txt
+      workingDir: ${PROJECT_SOURCE}
+      label: Install Dependencies
+      group:
+        kind: build
+        isDefault: true
+
+  - id: run-dev
+    exec:
+      component: python
+      commandLine: uvicorn main:app --reload --host 0.0.0.0 --port 8000
+      workingDir: ${PROJECT_SOURCE}
+      label: Run Dev Server
+      group:
+        kind: run
+        isDefault: true
+
+  - id: run-tests
+    exec:
+      component: python
+      commandLine: python -m pytest -v
+      workingDir: ${PROJECT_SOURCE}
+      label: Run Tests
+      group:
+        kind: test
+        isDefault: true

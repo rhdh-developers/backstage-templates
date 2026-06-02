@@ -1,0 +1,32 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.appName }}
+  description: Python FastAPI REST API service – ${{ values.appName }}
+  annotations:
+    # ArgoCD integration (shows Sync/Health status tab)
+    argocd/app-name: ${{ values.appName }}
+    # Kubernetes integration (shows Pods/Deployments tab)
+    backstage.io/kubernetes-id: ${{ values.appName }}
+    backstage.io/kubernetes-namespace: ${{ values.appName }}
+    # Tekton integration (shows PipelineRuns tab)
+    janus-idp.io/tekton-enabled: "true"
+    janus-idp.io/tekton-namespace: ${{ values.appName }}
+    # Source code location for Backstage
+    backstage.io/source-location: url:https://github.com/${{ values.githubOrg }}/${{ values.appName }}-code
+    # GitHub repo for SCM links
+    github.com/project-slug: ${{ values.githubOrg }}/${{ values.appName }}-code
+  links:
+    - url: https://github.com/${{ values.githubOrg }}/${{ values.appName }}-code
+      title: Source Code (GitHub)
+      icon: github
+    - url: https://github.com/${{ values.githubOrg }}/${{ values.appName }}-k8
+      title: Deployment Manifests (GitHub)
+      icon: github
+    - url: https://devspaces.${{ values.clusterRouterBase }}/f?url=https://github.com/${{ values.githubOrg }}/${{ values.appName }}-code
+      title: Open in Dev Spaces
+      icon: web
+spec:
+  type: service
+  lifecycle: experimental
+  owner: ${{ values.owner }}

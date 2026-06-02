@@ -1,0 +1,57 @@
+# Manual PipelineRun template – copy and apply to trigger an ad-hoc build.
+# The EventListener / TriggerTemplate creates these automatically on git push.
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: ${{ values.appName }}-
+  namespace: ${{ values.appName }}
+  labels:
+    app.kubernetes.io/instance: ${{ values.appName }}
+    app.kubernetes.io/name: ${{ values.appName }}
+    backstage.io/kubernetes-id: ${{ values.appName }}
+    pipeline.openshift.io/strategy: docker
+    pipeline.openshift.io/type: kubernetes
+    tekton.dev/pipeline: ${{ values.appName }}
+spec:
+  pipelineRef:
+    name: ${{ values.appName }}
+  params:
+  - name: APP_NAME
+    value: ${{ values.appName }}
+  - name: GIT_REPO
+    value: https://github.com/${{ values.githubOrg }}/${{ values.appName }}-code.git
+  - name: GIT_K8_REPO
+    value: https://github.com/${{ values.githubOrg }}/${{ values.appName }}-k8.git
+  - name: GIT_REVISION
+    value: main
+  - name: IMAGE_NAME
+    value: image-registry.openshift-image-registry.svc:5000/${{ values.appName }}/${{ values.appName }}
+  - name: PATH_CONTEXT
+    value: .
+  taskRunTemplate:
+    serviceAccountName: pipeline
+  timeouts:
+    pipeline: 1h0m0s
+  workspaces:
+  - name: workspace
+    volumeClaimTemplate:
+      metadata:
+        labels:
+          tekton.dev/pipeline: ${{ values.appName }}
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+  - name: k8-workspace
+    volumeClaimTemplate:
+      metadata:
+        labels:
+          tekton.dev/pipeline: ${{ values.appName }}
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi

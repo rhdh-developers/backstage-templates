@@ -1,0 +1,207 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: ${{ values.appName }}
+  namespace: ${{ values.appName }}
+  labels:
+    app.kubernetes.io/instance: ${{ values.appName }}
+    app.kubernetes.io/name: ${{ values.appName }}
+    backstage.io/kubernetes-id: ${{ values.appName }}
+spec:
+  params:
+  - name: APP_NAME
+    type: string
+    default: ${{ values.appName }}
+  - name: GIT_REPO
+    type: string
+    default: https://github.com/${{ values.githubOrg }}/${{ values.appName }}-code.git
+    description: Source code repo URL
+  - name: GIT_K8_REPO
+    type: string
+    default: https://github.com/${{ values.githubOrg }}/${{ values.appName }}-k8.git
+    description: K8s manifests repo URL (pipeline writes updated image digest here)
+  - name: GIT_REVISION
+    type: string
+    default: main
+  - name: IMAGE_NAME
+    type: string
+    default: image-registry.openshift-image-registry.svc:5000/${{ values.appName }}/${{ values.appName }}
+  - name: PATH_CONTEXT
+    type: string
+    default: .
+  - name: GIT_USER_NAME
+    type: string
+    default: rhdh-developer
+  - name: GIT_USER_EMAIL
+    type: string
+    default: developer@redhat.com
+
+  workspaces:
+  - name: workspace       # holds the cloned source-code repo
+  - name: k8-workspace    # holds the cloned k8 manifests repo
+
+  tasks:
+  # ----------------------------------------------------------------------------
+  # Clone source code repo
+  # ----------------------------------------------------------------------------
+  - name: fetch-repository
+    params:
+    - name: URL
+      value: $(params.GIT_REPO)
+    - name: REVISION
+      value: $(params.GIT_REVISION)
+    - name: SUBDIRECTORY
+      value: ""
+    - name: DELETE_EXISTING
+      value: "true"
+    taskRef:
+      params:
+      - name: kind
+        value: task
+      - name: name
+        value: git-clone
+      - name: namespace
+        value: openshift-pipelines
+      resolver: cluster
+    workspaces:
+    - name: output
+      workspace: workspace
+
+  # ----------------------------------------------------------------------------
+  # Build and push container image using Buildah
+  # ----------------------------------------------------------------------------
+  - name: build
+    params:
+    - name: IMAGE
+      value: $(params.IMAGE_NAME)
+    - name: TLS_VERIFY
+      value: "false"
+    - name: CONTEXT
+      value: $(params.PATH_CONTEXT)
+    runAfter:
+    - fetch-repository
+    taskRef:
+      params:
+      - name: kind
+        value: task
+      - name: name
+        value: buildah
+      - name: namespace
+        value: openshift-pipelines
+      resolver: cluster
+    workspaces:
+    - name: source
+      workspace: workspace
+
+  # ----------------------------------------------------------------------------
+  # Clone k8s manifests repo so we can update the image digest
+  # ----------------------------------------------------------------------------
+  - name: fetch-k8-repository
+    params:
+    - name: URL
+      value: $(params.GIT_K8_REPO)
+    - name: REVISION
+      value: $(params.GIT_REVISION)
+    - name: SUBDIRECTORY
+      value: ""
+    - name: DELETE_EXISTING
+      value: "true"
+    runAfter:
+    - build
+    taskRef:
+      params:
+      - name: kind
+        value: task
+      - name: name
+        value: git-clone
+      - name: namespace
+        value: openshift-pipelines
+      resolver: cluster
+    workspaces:
+    - name: output
+      workspace: k8-workspace
+
+  # ----------------------------------------------------------------------------
+  # Patch deployment.yaml with the newly built image digest
+  # ----------------------------------------------------------------------------
+  - name: update-deployment
+    params:
+    - name: IMAGE_NAME
+      value: $(params.IMAGE_NAME)
+    - name: IMAGE_DIGEST
+      value: $(tasks.build.results.IMAGE_DIGEST)
+    runAfter:
+    - fetch-k8-repository
+    taskSpec:
+      params:
+      - name: IMAGE_NAME
+        type: string
+      - name: IMAGE_DIGEST
+        type: string
+      steps:
+      - name: update-image
+        image: alpine/git:latest
+        workingDir: /workspace/source
+        script: |
+          #!/bin/sh
+          set -e
+          git config --global --add safe.directory /workspace/source
+          NEW_IMAGE="$(params.IMAGE_NAME)@$(params.IMAGE_DIGEST)"
+          echo "Updating image to: $NEW_IMAGE"
+          sed -i "s|image:.*${{ values.appName }}.*|image: $NEW_IMAGE|g" k8/gitops/deployment.yaml
+          echo "--- Updated deployment.yaml ---"
+          cat k8/gitops/deployment.yaml
+      workspaces:
+      - name: source
+    workspaces:
+    - name: source
+      workspace: k8-workspace
+
+  # ----------------------------------------------------------------------------
+  # Commit and push the updated deployment.yaml back to the k8 repo.
+  # Requires the `github-token` secret (key: token) in the namespace.
+  # ----------------------------------------------------------------------------
+  - name: commit-and-push
+    params:
+    - name: GIT_USER_NAME
+      value: $(params.GIT_USER_NAME)
+    - name: GIT_USER_EMAIL
+      value: $(params.GIT_USER_EMAIL)
+    - name: GIT_K8_REPO
+      value: $(params.GIT_K8_REPO)
+    runAfter:
+    - update-deployment
+    taskSpec:
+      params:
+      - name: GIT_USER_NAME
+        type: string
+      - name: GIT_USER_EMAIL
+        type: string
+      - name: GIT_K8_REPO
+        type: string
+      steps:
+      - name: commit-push
+        image: alpine/git:latest
+        workingDir: /workspace/source
+        script: |
+          #!/bin/sh
+          set -e
+          git config --global --add safe.directory /workspace/source
+          git config user.name "$(params.GIT_USER_NAME)"
+          git config user.email "$(params.GIT_USER_EMAIL)"
+          REPO_URL=$(echo "$(params.GIT_K8_REPO)" | sed 's|https://|https://'"$GITHUB_TOKEN"'@|')
+          git remote set-url origin "$REPO_URL"
+          git add k8/gitops/deployment.yaml
+          git commit -m "chore: update image digest [skip ci]"
+          git push origin HEAD:main
+        env:
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: github-token
+              key: token
+      workspaces:
+      - name: source
+    workspaces:
+    - name: source
+      workspace: k8-workspace

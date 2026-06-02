@@ -1,0 +1,623 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: python-fastapi
+  title: Python FastAPI Application
+  description: >
+    Creates a Python FastAPI REST API service with two GitHub repos (source code
+    and deployment manifests), a Tekton CI pipeline, and an ArgoCD-managed
+    OpenShift deployment. Registers a Backstage catalog component with links to
+    source, manifests, and OpenShift Dev Spaces.
+  tags:
+    - python
+    - fastapi
+    - openshift
+    - gitops
+    - tekton
+    - argocd
+spec:
+  owner: rhdh-developers
+  type: service
+
+  parameters:
+    - title: Application Details
+      required:
+        - appName
+        - githubOrg
+        - owner
+      properties:
+        appName:
+          title: Application Name
+          type: string
+          default: my-rest-api
+          description: >
+            Lowercase name for your application. Used as the base name for both
+            GitHub repos (<name>-code and <name>-k8), the OpenShift namespace,
+            and all Kubernetes resources.
+          pattern: '^[a-z][a-z0-9-]{1,28}[a-z0-9]$'
+          ui:autofocus: true
+        githubOrg:
+          title: GitHub Organization
+          type: string
+          default: rhdh-developers
+          description: GitHub organization where both repos will be created.
+        owner:
+          title: Owner
+          type: string
+          description: Backstage owner of this component (user or group).
+          ui:field: OwnerPicker
+          ui:options:
+            allowedKinds:
+              - Group
+              - User
+
+    - title: Cluster Configuration
+      required:
+        - clusterRouterBase
+      properties:
+        clusterRouterBase:
+          title: Cluster Router Base Domain
+          type: string
+          default: apps.cluster.example.com
+          description: >
+            OpenShift cluster wildcard router base (e.g. apps.cluster.example.com).
+            Used to construct the Dev Spaces URL and the Tekton EventListener
+            webhook URL.
+
+    - title: GitHub Pipeline Credentials
+      required:
+        - githubToken
+      properties:
+        githubToken:
+          title: GitHub Personal Access Token
+          type: string
+          description: >
+            PAT with repo read/write permissions. Stored as the `github-token`
+            secret in the application namespace so the Tekton pipeline can push
+            updated image digests back to the k8 repo.
+          ui:widget: password
+
+  steps:
+    # -------------------------------------------------------------------------
+    # 1. Render source-code skeleton into ./code workspace directory
+    # -------------------------------------------------------------------------
+    - id: fetch-code-skeleton
+      name: Render Source Code Skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton/code
+        targetPath: ./code
+        values:
+          appName: ${{ parameters.appName }}
+          githubOrg: ${{ parameters.githubOrg }}
+          owner: ${{ parameters.owner }}
+          clusterRouterBase: ${{ parameters.clusterRouterBase }}
+
+    # -------------------------------------------------------------------------
+    # 2. Render k8s/gitops skeleton into ./k8 workspace directory
+    # -------------------------------------------------------------------------
+    - id: fetch-k8-skeleton
+      name: Render K8s/GitOps Skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton-k8
+        targetPath: ./k8
+        values:
+          appName: ${{ parameters.appName }}
+          githubOrg: ${{ parameters.githubOrg }}
+          owner: ${{ parameters.owner }}
+          clusterRouterBase: ${{ parameters.clusterRouterBase }}
+
+    # -------------------------------------------------------------------------
+    # 3. Publish source-code repo: <org>/<appName>-code
+    # -------------------------------------------------------------------------
+    - id: publish-code
+      name: Create Source Code Repository
+      action: publish:github
+      input:
+        repoUrl: github.com?repo=${{ parameters.appName }}-code&owner=${{ parameters.githubOrg }}
+        description: Source code for the ${{ parameters.appName }} FastAPI service
+        defaultBranch: main
+        sourcePath: ./code
+        gitCommitMessage: "chore: initial scaffold from RHDH template"
+        repoVisibility: public
+
+    # -------------------------------------------------------------------------
+    # 4. Publish k8s manifests repo: <org>/<appName>-k8
+    # -------------------------------------------------------------------------
+    - id: publish-k8
+      name: Create K8s Manifests Repository
+      action: publish:github
+      input:
+        repoUrl: github.com?repo=${{ parameters.appName }}-k8&owner=${{ parameters.githubOrg }}
+        description: Kubernetes/GitOps manifests for the ${{ parameters.appName }} FastAPI service
+        defaultBranch: main
+        sourcePath: ./k8
+        gitCommitMessage: "chore: initial scaffold from RHDH template"
+        repoVisibility: public
+
+    # -------------------------------------------------------------------------
+    # 5. Create the application namespace
+    # -------------------------------------------------------------------------
+    - id: create-namespace
+      name: Create Application Namespace
+      action: kubernetes:apply
+      input:
+        namespaced: false
+        manifest: |
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: ${{ parameters.appName }}
+            labels:
+              argocd.argoproj.io/managed-by: rhdh-gitops
+
+    # -------------------------------------------------------------------------
+    # 6. Store GitHub PAT as a secret in the namespace (used by pipeline)
+    # -------------------------------------------------------------------------
+    - id: create-github-secret
+      name: Create GitHub Token Secret
+      action: kubernetes:apply
+      input:
+        namespace: ${{ parameters.appName }}
+        manifest: |
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: github-token
+            namespace: ${{ parameters.appName }}
+          type: Opaque
+          stringData:
+            token: ${{ parameters.githubToken }}
+
+    # -------------------------------------------------------------------------
+    # 7. Apply the Tekton Pipeline directly so it is available before ArgoCD
+    #    syncs (ArgoCD will keep it in sync long-term via k8/gitops/pipeline.yaml)
+    # -------------------------------------------------------------------------
+    - id: apply-pipeline
+      name: Create Tekton Pipeline
+      action: kubernetes:apply
+      input:
+        namespace: ${{ parameters.appName }}
+        manifest: |
+          apiVersion: tekton.dev/v1
+          kind: Pipeline
+          metadata:
+            name: ${{ parameters.appName }}
+            namespace: ${{ parameters.appName }}
+            labels:
+              app.kubernetes.io/instance: ${{ parameters.appName }}
+              app.kubernetes.io/name: ${{ parameters.appName }}
+              backstage.io/kubernetes-id: ${{ parameters.appName }}
+          spec:
+            params:
+            - name: APP_NAME
+              type: string
+              default: ${{ parameters.appName }}
+            - name: GIT_REPO
+              type: string
+              default: https://github.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-code.git
+            - name: GIT_K8_REPO
+              type: string
+              default: https://github.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-k8.git
+            - name: GIT_REVISION
+              type: string
+              default: main
+            - name: IMAGE_NAME
+              type: string
+              default: image-registry.openshift-image-registry.svc:5000/${{ parameters.appName }}/${{ parameters.appName }}
+            - name: PATH_CONTEXT
+              type: string
+              default: .
+            - name: GIT_USER_NAME
+              type: string
+              default: rhdh-developer
+            - name: GIT_USER_EMAIL
+              type: string
+              default: developer@redhat.com
+            workspaces:
+            - name: workspace
+            - name: k8-workspace
+            tasks:
+            - name: fetch-repository
+              params:
+              - name: URL
+                value: $(params.GIT_REPO)
+              - name: REVISION
+                value: $(params.GIT_REVISION)
+              - name: SUBDIRECTORY
+                value: ""
+              - name: DELETE_EXISTING
+                value: "true"
+              taskRef:
+                params:
+                - name: kind
+                  value: task
+                - name: name
+                  value: git-clone
+                - name: namespace
+                  value: openshift-pipelines
+                resolver: cluster
+              workspaces:
+              - name: output
+                workspace: workspace
+            - name: build
+              params:
+              - name: IMAGE
+                value: $(params.IMAGE_NAME)
+              - name: TLS_VERIFY
+                value: "false"
+              - name: CONTEXT
+                value: $(params.PATH_CONTEXT)
+              runAfter:
+              - fetch-repository
+              taskRef:
+                params:
+                - name: kind
+                  value: task
+                - name: name
+                  value: buildah
+                - name: namespace
+                  value: openshift-pipelines
+                resolver: cluster
+              workspaces:
+              - name: source
+                workspace: workspace
+            - name: fetch-k8-repository
+              params:
+              - name: URL
+                value: $(params.GIT_K8_REPO)
+              - name: REVISION
+                value: $(params.GIT_REVISION)
+              - name: SUBDIRECTORY
+                value: ""
+              - name: DELETE_EXISTING
+                value: "true"
+              runAfter:
+              - build
+              taskRef:
+                params:
+                - name: kind
+                  value: task
+                - name: name
+                  value: git-clone
+                - name: namespace
+                  value: openshift-pipelines
+                resolver: cluster
+              workspaces:
+              - name: output
+                workspace: k8-workspace
+            - name: update-deployment
+              params:
+              - name: IMAGE_NAME
+                value: $(params.IMAGE_NAME)
+              - name: IMAGE_DIGEST
+                value: $(tasks.build.results.IMAGE_DIGEST)
+              runAfter:
+              - fetch-k8-repository
+              taskSpec:
+                params:
+                - name: IMAGE_NAME
+                  type: string
+                - name: IMAGE_DIGEST
+                  type: string
+                steps:
+                - name: update-image
+                  image: alpine/git:latest
+                  workingDir: /workspace/source
+                  script: |
+                    #!/bin/sh
+                    set -e
+                    git config --global --add safe.directory /workspace/source
+                    NEW_IMAGE="$(params.IMAGE_NAME)@$(params.IMAGE_DIGEST)"
+                    echo "Updating image to: $NEW_IMAGE"
+                    sed -i "s|image:.*${{ parameters.appName }}.*|image: $NEW_IMAGE|g" k8/gitops/deployment.yaml
+                    echo "Updated deployment.yaml:"
+                    cat k8/gitops/deployment.yaml
+                workspaces:
+                - name: source
+              workspaces:
+              - name: source
+                workspace: k8-workspace
+            - name: commit-and-push
+              params:
+              - name: GIT_USER_NAME
+                value: $(params.GIT_USER_NAME)
+              - name: GIT_USER_EMAIL
+                value: $(params.GIT_USER_EMAIL)
+              - name: GIT_K8_REPO
+                value: $(params.GIT_K8_REPO)
+              runAfter:
+              - update-deployment
+              taskSpec:
+                params:
+                - name: GIT_USER_NAME
+                  type: string
+                - name: GIT_USER_EMAIL
+                  type: string
+                - name: GIT_K8_REPO
+                  type: string
+                steps:
+                - name: commit-push
+                  image: alpine/git:latest
+                  workingDir: /workspace/source
+                  script: |
+                    #!/bin/sh
+                    set -e
+                    git config --global --add safe.directory /workspace/source
+                    git config user.name "$(params.GIT_USER_NAME)"
+                    git config user.email "$(params.GIT_USER_EMAIL)"
+                    REPO_URL=$(echo "$(params.GIT_K8_REPO)" | sed 's|https://|https://'"$GITHUB_TOKEN"'@|')
+                    git remote set-url origin "$REPO_URL"
+                    git add k8/gitops/deployment.yaml
+                    git commit -m "chore: update image digest [skip ci]"
+                    git push origin HEAD:main
+                  env:
+                  - name: GITHUB_TOKEN
+                    valueFrom:
+                      secretKeyRef:
+                        name: github-token
+                        key: token
+                workspaces:
+                - name: source
+              workspaces:
+              - name: source
+                workspace: k8-workspace
+
+    # -------------------------------------------------------------------------
+    # 8. Apply Tekton TriggerBinding (used by EventListener for webhook runs)
+    # -------------------------------------------------------------------------
+    - id: apply-trigger-binding
+      name: Create Tekton TriggerBinding
+      action: kubernetes:apply
+      input:
+        namespace: ${{ parameters.appName }}
+        manifest: |
+          apiVersion: triggers.tekton.dev/v1beta1
+          kind: TriggerBinding
+          metadata:
+            name: ${{ parameters.appName }}-binding
+            namespace: ${{ parameters.appName }}
+          spec:
+            params:
+            - name: git-repo-url
+              value: $(body.repository.clone_url)
+            - name: git-revision
+              value: $(body.after)
+
+    # -------------------------------------------------------------------------
+    # 9. Apply Tekton TriggerTemplate
+    # -------------------------------------------------------------------------
+    - id: apply-trigger-template
+      name: Create Tekton TriggerTemplate
+      action: kubernetes:apply
+      input:
+        namespace: ${{ parameters.appName }}
+        manifest: |
+          apiVersion: triggers.tekton.dev/v1beta1
+          kind: TriggerTemplate
+          metadata:
+            name: ${{ parameters.appName }}-template
+            namespace: ${{ parameters.appName }}
+          spec:
+            params:
+            - name: git-repo-url
+            - name: git-revision
+              default: main
+            resourcetemplates:
+            - apiVersion: tekton.dev/v1
+              kind: PipelineRun
+              metadata:
+                generateName: ${{ parameters.appName }}-
+                namespace: ${{ parameters.appName }}
+                labels:
+                  app.kubernetes.io/instance: ${{ parameters.appName }}
+                  backstage.io/kubernetes-id: ${{ parameters.appName }}
+              spec:
+                pipelineRef:
+                  name: ${{ parameters.appName }}
+                params:
+                - name: APP_NAME
+                  value: ${{ parameters.appName }}
+                - name: GIT_REPO
+                  value: $(tt.params.git-repo-url)
+                - name: GIT_REVISION
+                  value: $(tt.params.git-revision)
+                - name: IMAGE_NAME
+                  value: image-registry.openshift-image-registry.svc:5000/${{ parameters.appName }}/${{ parameters.appName }}
+                - name: GIT_K8_REPO
+                  value: https://github.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-k8.git
+                - name: PATH_CONTEXT
+                  value: .
+                taskRunTemplate:
+                  serviceAccountName: pipeline
+                workspaces:
+                - name: workspace
+                  volumeClaimTemplate:
+                    spec:
+                      accessModes:
+                      - ReadWriteOnce
+                      resources:
+                        requests:
+                          storage: 1Gi
+                - name: k8-workspace
+                  volumeClaimTemplate:
+                    spec:
+                      accessModes:
+                      - ReadWriteOnce
+                      resources:
+                        requests:
+                          storage: 1Gi
+
+    # -------------------------------------------------------------------------
+    # 10. Apply Tekton EventListener + OpenShift Route for GitHub webhook
+    # -------------------------------------------------------------------------
+    - id: apply-event-listener
+      name: Create Tekton EventListener
+      action: kubernetes:apply
+      input:
+        namespace: ${{ parameters.appName }}
+        manifest: |
+          apiVersion: triggers.tekton.dev/v1beta1
+          kind: EventListener
+          metadata:
+            name: ${{ parameters.appName }}-listener
+            namespace: ${{ parameters.appName }}
+          spec:
+            serviceAccountName: pipeline
+            triggers:
+            - name: github-push
+              interceptors:
+              - ref:
+                  name: github
+                params:
+                - name: secretRef
+                  value:
+                    secretName: github-webhook-secret
+                    secretKey: secret
+                - name: eventTypes
+                  value:
+                  - push
+              bindings:
+              - ref: ${{ parameters.appName }}-binding
+              template:
+                ref: ${{ parameters.appName }}-template
+
+    - id: apply-listener-route
+      name: Expose EventListener Route
+      action: kubernetes:apply
+      input:
+        namespace: ${{ parameters.appName }}
+        manifest: |
+          apiVersion: route.openshift.io/v1
+          kind: Route
+          metadata:
+            name: el-${{ parameters.appName }}-listener
+            namespace: ${{ parameters.appName }}
+          spec:
+            port:
+              targetPort: 8080
+            tls:
+              termination: edge
+              insecureEdgeTerminationPolicy: Redirect
+            to:
+              kind: Service
+              name: el-${{ parameters.appName }}-listener
+              weight: 100
+
+    # -------------------------------------------------------------------------
+    # 11. Create ArgoCD Application pointing at <appName>-k8 / k8/gitops
+    # -------------------------------------------------------------------------
+    - id: create-argocd-app
+      name: Create ArgoCD Application
+      action: argocd:create-resources
+      input:
+        appName: ${{ parameters.appName }}
+        argoInstance: main
+        namespace: rhdh-gitops
+        repoUrl: https://github.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-k8.git
+        path: k8/gitops
+        labelValue: ${{ parameters.appName }}
+
+    # -------------------------------------------------------------------------
+    # 12. Kick off the first PipelineRun to build and deploy the initial image
+    # -------------------------------------------------------------------------
+    - id: start-pipeline-run
+      name: Start Initial Pipeline Run
+      action: kubernetes:apply
+      input:
+        namespace: ${{ parameters.appName }}
+        manifest: |
+          apiVersion: tekton.dev/v1
+          kind: PipelineRun
+          metadata:
+            generateName: ${{ parameters.appName }}-initial-
+            namespace: ${{ parameters.appName }}
+            labels:
+              app.kubernetes.io/instance: ${{ parameters.appName }}
+              app.kubernetes.io/name: ${{ parameters.appName }}
+              backstage.io/kubernetes-id: ${{ parameters.appName }}
+              pipeline.openshift.io/strategy: docker
+              pipeline.openshift.io/type: kubernetes
+              tekton.dev/pipeline: ${{ parameters.appName }}
+          spec:
+            pipelineRef:
+              name: ${{ parameters.appName }}
+            params:
+            - name: APP_NAME
+              value: ${{ parameters.appName }}
+            - name: GIT_REPO
+              value: https://github.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-code.git
+            - name: GIT_K8_REPO
+              value: https://github.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-k8.git
+            - name: GIT_REVISION
+              value: main
+            - name: IMAGE_NAME
+              value: image-registry.openshift-image-registry.svc:5000/${{ parameters.appName }}/${{ parameters.appName }}
+            - name: PATH_CONTEXT
+              value: .
+            taskRunTemplate:
+              serviceAccountName: pipeline
+            timeouts:
+              pipeline: 1h0m0s
+            workspaces:
+            - name: workspace
+              volumeClaimTemplate:
+                metadata:
+                  labels:
+                    tekton.dev/pipeline: ${{ parameters.appName }}
+                spec:
+                  accessModes:
+                  - ReadWriteOnce
+                  resources:
+                    requests:
+                      storage: 1Gi
+            - name: k8-workspace
+              volumeClaimTemplate:
+                metadata:
+                  labels:
+                    tekton.dev/pipeline: ${{ parameters.appName }}
+                spec:
+                  accessModes:
+                  - ReadWriteOnce
+                  resources:
+                    requests:
+                      storage: 1Gi
+
+    # -------------------------------------------------------------------------
+    # 13. Register the catalog component from the code repo's catalog-info.yaml
+    # -------------------------------------------------------------------------
+    - id: register-catalog
+      name: Register in Backstage Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps['publish-code'].output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+
+  output:
+    links:
+      - title: Source Code Repository
+        url: ${{ steps['publish-code'].output.remoteUrl }}
+        icon: github
+      - title: K8s Manifests Repository
+        url: ${{ steps['publish-k8'].output.remoteUrl }}
+        icon: github
+      - title: Open in Catalog
+        icon: catalog
+        entityRef: ${{ steps['register-catalog'].output.entityRef }}
+      - title: Open in Dev Spaces
+        url: https://devspaces.${{ parameters.clusterRouterBase }}/f?url=https://github.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-code
+        icon: web
+      - title: Configure GitHub Webhook
+        url: https://github.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-code/settings/hooks/new
+        icon: github
+    text:
+      - title: Webhook URL for Tekton
+        content: |
+          Set up the GitHub webhook on the **${{ parameters.appName }}-code** repo to trigger
+          pipeline builds on push.  After ArgoCD deploys the EventListener, the webhook URL will be:
+
+          `https://el-${{ parameters.appName }}-listener-${{ parameters.appName }}.${{ parameters.clusterRouterBase }}`
+
+          Use a random string as the webhook secret and store it in a Kubernetes secret named
+          `github-webhook-secret` (key: `secret`) in the `${{ parameters.appName }}` namespace.

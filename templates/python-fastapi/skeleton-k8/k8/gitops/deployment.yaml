@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${{ values.appName }}
+  namespace: ${{ values.appName }}
+  labels:
+    app: ${{ values.appName }}
+    app.kubernetes.io/component: ${{ values.appName }}
+    app.kubernetes.io/instance: ${{ values.appName }}
+    app.kubernetes.io/name: ${{ values.appName }}
+    app.kubernetes.io/part-of: ${{ values.appName }}
+    backstage.io/kubernetes-id: ${{ values.appName }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ${{ values.appName }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: ${{ values.appName }}
+        deployment: ${{ values.appName }}
+        backstage.io/kubernetes-id: ${{ values.appName }}
+    spec:
+      containers:
+      - name: ${{ values.appName }}
+        # image is updated by the Tekton pipeline after each build
+        image: image-registry.openshift-image-registry.svc:5000/${{ values.appName }}/${{ values.appName }}:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 20
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30

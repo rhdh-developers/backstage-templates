@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${{ values.appName }}
+  namespace: ${{ values.appName }}
+  labels:
+    app: ${{ values.appName }}
+    app.kubernetes.io/component: ${{ values.appName }}
+    app.kubernetes.io/instance: ${{ values.appName }}
+    app.kubernetes.io/name: ${{ values.appName }}
+    app.kubernetes.io/part-of: ${{ values.appName }}
+    backstage.io/kubernetes-id: ${{ values.appName }}
+spec:
+  ports:
+  - name: 8000-tcp
+    port: 8000
+    targetPort: 8000
+    protocol: TCP
+  selector:
+    app: ${{ values.appName }}
+    deployment: ${{ values.appName }}

@@ -1,0 +1,24 @@
+# Reference copy of the ArgoCD Application created by the RHDH template.
+# The live resource is in the rhdh-gitops namespace – do not apply this manually
+# unless you are re-creating the ArgoCD app from scratch.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ${{ values.appName }}
+  namespace: rhdh-gitops
+  labels:
+    app.kubernetes.io/name: ${{ values.appName }}
+    backstage.io/kubernetes-id: ${{ values.appName }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/${{ values.githubOrg }}/${{ values.appName }}-k8.git
+    targetRevision: main
+    path: k8/gitops
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ${{ values.appName }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

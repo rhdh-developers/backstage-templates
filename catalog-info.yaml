@@ -1,0 +1,9 @@
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: my-templates
+  description: My organization templates
+spec:
+  targets:
+    - ./templates/python-fastapi/template.yaml
+  
