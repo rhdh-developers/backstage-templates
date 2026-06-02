@@ -125,7 +125,6 @@ spec:
         repoUrl: https://github.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-k8.git
         path: k8/gitops
         labelValue: ${{ parameters.appName }}
-        createNamespace: true
 
     # -------------------------------------------------------------------------
     # 6. Register the catalog component from the code repo's catalog-info.yaml
