@@ -3,4 +3,4 @@ kind: Namespace
 metadata:
   name: ${{ values.appName }}
   labels:
-    argocd.argoproj.io/managed-by: rhdh-gitops
+    argocd.argoproj.io/managed-by: openshift-gitops

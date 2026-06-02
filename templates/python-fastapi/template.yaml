@@ -120,8 +120,8 @@ spec:
       action: argocd:create-resources
       input:
         appName: ${{ parameters.appName }}
-        argoInstance: main
-        namespace: rhdh-gitops
+        argoInstance: default
+        namespace: openshift-gitops
         repoUrl: https://github.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-k8.git
         path: k8/gitops
         labelValue: ${{ parameters.appName }}

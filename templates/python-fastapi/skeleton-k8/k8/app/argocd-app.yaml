@@ -5,7 +5,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: ${{ values.appName }}
-  namespace: rhdh-gitops
+  namespace: openshift-gitops
   labels:
     app.kubernetes.io/name: ${{ values.appName }}
     backstage.io/kubernetes-id: ${{ values.appName }}
