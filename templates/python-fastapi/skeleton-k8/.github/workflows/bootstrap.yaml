@@ -1,0 +1,129 @@
+name: Bootstrap OpenShift Resources
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_name:
+        description: Application name (used as the OpenShift namespace)
+        required: true
+        type: string
+      github_org:
+        description: GitHub organization
+        required: true
+        type: string
+
+jobs:
+  bootstrap:
+    name: Create namespace, secrets, and initial pipeline run
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Install OpenShift CLI
+        uses: redhat-actions/openshift-tools-installer@v1
+        with:
+          oc: latest
+
+      - name: Log in to OpenShift
+        uses: redhat-actions/oc-login@v1
+        with:
+          openshift_server_url: ${{ secrets.OPENSHIFT_SERVER }}
+          openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
+          insecure_skip_tls_verify: true
+
+      # Create the namespace and add the managed-by label so the OpenShift
+      # GitOps operator grants ArgoCD admin rights in it.
+      - name: Create and label namespace
+        run: |
+          oc new-project ${{ inputs.app_name }} || \
+            echo "Namespace ${{ inputs.app_name }} already exists"
+          oc label namespace ${{ inputs.app_name }} \
+            argocd.argoproj.io/managed-by=openshift-gitops \
+            --overwrite
+
+      # Store a GitHub token in the namespace so the Tekton pipeline can push
+      # updated image digests back to the k8 repo.
+      # GITHUB_TOKEN has write access to this (k8) repo which is all the
+      # pipeline needs for the commit-and-push task.
+      - name: Create github-token secret
+        run: |
+          oc create secret generic github-token \
+            --from-literal=token=${{ secrets.GITHUB_TOKEN }} \
+            -n ${{ inputs.app_name }} \
+            --dry-run=client -o yaml | oc apply -f -
+
+      # Wait for ArgoCD to sync the Pipeline resource (up to 5 minutes).
+      - name: Wait for ArgoCD to sync Pipeline
+        run: |
+          echo "Waiting for ArgoCD to sync Pipeline '${{ inputs.app_name }}'..."
+          for i in $(seq 1 30); do
+            if oc get pipeline ${{ inputs.app_name }} \
+                -n ${{ inputs.app_name }} &>/dev/null; then
+              echo "Pipeline found after $((i * 10))s"
+              exit 0
+            fi
+            echo "  attempt $i/30 — waiting 10s..."
+            sleep 10
+          done
+          echo "WARNING: Pipeline not found after 5 minutes. ArgoCD may still be syncing."
+          echo "Run the first pipeline manually once ArgoCD sync completes."
+          exit 0
+
+      # Start the initial build so the app is deployed on first run.
+      - name: Start initial PipelineRun
+        run: |
+          if ! oc get pipeline ${{ inputs.app_name }} \
+              -n ${{ inputs.app_name }} &>/dev/null; then
+            echo "Pipeline not ready — skipping initial PipelineRun"
+            exit 0
+          fi
+          oc create -f - <<EOF
+          apiVersion: tekton.dev/v1
+          kind: PipelineRun
+          metadata:
+            generateName: ${{ inputs.app_name }}-initial-
+            namespace: ${{ inputs.app_name }}
+            labels:
+              app.kubernetes.io/instance: ${{ inputs.app_name }}
+              backstage.io/kubernetes-id: ${{ inputs.app_name }}
+              tekton.dev/pipeline: ${{ inputs.app_name }}
+          spec:
+            pipelineRef:
+              name: ${{ inputs.app_name }}
+            params:
+            - name: APP_NAME
+              value: ${{ inputs.app_name }}
+            - name: GIT_REPO
+              value: https://github.com/${{ inputs.github_org }}/${{ inputs.app_name }}-code.git
+            - name: GIT_K8_REPO
+              value: https://github.com/${{ inputs.github_org }}/${{ inputs.app_name }}-k8.git
+            - name: GIT_REVISION
+              value: main
+            - name: IMAGE_NAME
+              value: image-registry.openshift-image-registry.svc:5000/${{ inputs.app_name }}/${{ inputs.app_name }}
+            - name: PATH_CONTEXT
+              value: .
+            taskRunTemplate:
+              serviceAccountName: pipeline
+            timeouts:
+              pipeline: 1h0m0s
+            workspaces:
+            - name: workspace
+              volumeClaimTemplate:
+                spec:
+                  accessModes:
+                  - ReadWriteOnce
+                  resources:
+                    requests:
+                      storage: 1Gi
+            - name: k8-workspace
+              volumeClaimTemplate:
+                spec:
+                  accessModes:
+                  - ReadWriteOnce
+                  resources:
+                    requests:
+                      storage: 1Gi
+          EOF
+          echo "Initial PipelineRun created."
