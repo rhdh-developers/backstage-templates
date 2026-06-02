@@ -30,7 +30,6 @@ When a developer selects this template and fills in the form, Developer Hub will
 | Application Name | `my-rest-api` | Base name used for repos, namespace, and all K8s resources |
 | GitHub Organization | `rhdh-developers` | Org where both repos are created |
 | Owner | — | Backstage user or group that owns the component |
-| GitHub Token | — | Personal Access Token (repo read/write) stored as a K8s secret so the pipeline can push updated image digests back to the k8 repo |
 
 ---
 

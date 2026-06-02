@@ -1,6 +1,6 @@
 create a backstage template for template/python-fastapi
 
-the template will create two repos in github under the `rhdh-developers` org, one for source code (a skeleton template based on `sample-app/rest-api/code`) that can be opened in an ide (openshift dev spaces or cloned to a local ide), and another skeleton template for deployment (based on files found in `sample-app/rest-api/k8/*`) with openshift gitops (argoCD). assume dev spaces has the github dev token available (environment variable GITHUB_PATH).
+the template will create two repos in github under the `rhdh-developers` org, one for source code (a skeleton template based on `sample-app/rest-api/code`) that can be opened in an ide (openshift dev spaces or cloned to a local ide), and another skeleton template for deployment (based on files found in `sample-app/rest-api/k8/*`) with openshift gitops (argoCD). assume dev hub has the github dev token available (environment variable GITHUB_PATH).
 Aslo
 cat /opt/app-root/src/app-config-rhdh.yaml | grep -A3 "github"
  ...

@@ -51,19 +51,6 @@ spec:
               - Group
               - User
 
-    - title: GitHub Pipeline Credentials
-      required:
-        - githubToken
-      properties:
-        githubToken:
-          title: GitHub Personal Access Token
-          type: string
-          description: >
-            PAT with repo read/write permissions. Stored as the `github-token`
-            secret in the application namespace so the Tekton pipeline can push
-            updated image digests back to the k8 repo.
-          ui:widget: password
-
   steps:
     # -------------------------------------------------------------------------
     # 1. Render source-code skeleton into ./code workspace directory
@@ -138,7 +125,10 @@ spec:
               argocd.argoproj.io/managed-by: rhdh-gitops
 
     # -------------------------------------------------------------------------
-    # 6. Store GitHub PAT as a secret in the namespace (used by pipeline)
+    # 6. Store the RHDH GitHub integration token as a namespace secret so the
+    #    Tekton pipeline can push image-digest updates back to the k8 repo.
+    #    USER_OAUTH_TOKEN is the GitHub token from the user's RHDH session —
+    #    no separate PAT parameter is needed.
     # -------------------------------------------------------------------------
     - id: create-github-secret
       name: Create GitHub Token Secret
@@ -153,7 +143,7 @@ spec:
             namespace: ${{ parameters.appName }}
           type: Opaque
           stringData:
-            token: ${{ parameters.githubToken }}
+            token: ${{ secrets.USER_OAUTH_TOKEN }}
 
     # -------------------------------------------------------------------------
     # 7. Apply the Tekton Pipeline directly so it is available before ArgoCD
