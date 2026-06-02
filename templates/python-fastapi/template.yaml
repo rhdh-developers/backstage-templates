@@ -16,7 +16,7 @@ metadata:
     - tekton
     - argocd
 spec:
-  owner: rhdh-developers
+  owner: user:default/bugbiteme
   type: service
 
   parameters:
