@@ -1,0 +1,15 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: el-${{ values.appName }}-listener
+  namespace: ${{ values.appName }}
+spec:
+  port:
+    targetPort: 8080
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  to:
+    kind: Service
+    name: el-${{ values.appName }}-listener
+    weight: 100

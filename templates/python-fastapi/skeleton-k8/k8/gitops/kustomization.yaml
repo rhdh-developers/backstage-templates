@@ -1,11 +1,17 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# Namespace is created directly by the RHDH template (not managed by ArgoCD)
-# to avoid a chicken-and-egg problem on first sync.
+# All resources here are managed by ArgoCD.
+# The ArgoCD Application is created by the RHDH template with createNamespace: true,
+# so the namespace is created automatically on first sync.
 
 resources:
+  - namespace.yaml
   - deployment.yaml
   - service.yaml
   - route.yaml
   - pipeline.yaml
+  - triggerbinding.yaml
+  - triggertemplate.yaml
+  - eventlistener.yaml
+  - eventlistener-route.yaml
