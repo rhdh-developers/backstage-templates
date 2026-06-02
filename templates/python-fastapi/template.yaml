@@ -109,10 +109,43 @@ spec:
         repoVisibility: public
 
     # -------------------------------------------------------------------------
-    # 5. Create ArgoCD Application using the built-in 'default' AppProject.
-    #    The default project has clusterResourceWhitelist: [*/*], so ArgoCD
-    #    can create the Namespace resource from k8/gitops/namespace.yaml before
-    #    syncing the namespace-scoped resources into it.
+    # 5. Create and label the namespace so the OpenShift GitOps operator grants
+    #    ArgoCD admin rights in it before the first sync.
+    # -------------------------------------------------------------------------
+    - id: create-namespace
+      name: Create Application Namespace
+      action: kubernetes:apply
+      input:
+        namespaced: false
+        manifest: |
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: ${{ parameters.appName }}
+            labels:
+              argocd.argoproj.io/managed-by: openshift-gitops
+
+    # -------------------------------------------------------------------------
+    # 6. Store the RHDH GitHub integration token so the Tekton pipeline can
+    #    push updated image digests back to the k8 repo.
+    # -------------------------------------------------------------------------
+    - id: create-github-secret
+      name: Create GitHub Token Secret
+      action: kubernetes:apply
+      input:
+        manifest: |
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: github-token
+            namespace: ${{ parameters.appName }}
+          type: Opaque
+          stringData:
+            token: ${{ secrets.USER_OAUTH_TOKEN }}
+
+    # -------------------------------------------------------------------------
+    # 7. Create ArgoCD Application. Namespace already exists with the correct
+    #    managed-by label, so ArgoCD can sync all resources immediately.
     # -------------------------------------------------------------------------
     - id: create-argocd-app
       name: Create ArgoCD Application
@@ -124,10 +157,64 @@ spec:
         repoUrl: https://github.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-k8.git
         path: k8/gitops
         labelValue: ${{ parameters.appName }}
-        projectName: default
 
     # -------------------------------------------------------------------------
-    # 6. Register the catalog component from the code repo's catalog-info.yaml
+    # 8. Start the initial PipelineRun to build and deploy the first image.
+    # -------------------------------------------------------------------------
+    - id: start-pipeline-run
+      name: Start Initial Pipeline Run
+      action: kubernetes:apply
+      input:
+        manifest: |
+          apiVersion: tekton.dev/v1
+          kind: PipelineRun
+          metadata:
+            generateName: ${{ parameters.appName }}-initial-
+            namespace: ${{ parameters.appName }}
+            labels:
+              app.kubernetes.io/instance: ${{ parameters.appName }}
+              backstage.io/kubernetes-id: ${{ parameters.appName }}
+              tekton.dev/pipeline: ${{ parameters.appName }}
+          spec:
+            pipelineRef:
+              name: ${{ parameters.appName }}
+            params:
+            - name: APP_NAME
+              value: ${{ parameters.appName }}
+            - name: GIT_REPO
+              value: https://github.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-code.git
+            - name: GIT_K8_REPO
+              value: https://github.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-k8.git
+            - name: GIT_REVISION
+              value: main
+            - name: IMAGE_NAME
+              value: image-registry.openshift-image-registry.svc:5000/${{ parameters.appName }}/${{ parameters.appName }}
+            - name: PATH_CONTEXT
+              value: .
+            taskRunTemplate:
+              serviceAccountName: pipeline
+            timeouts:
+              pipeline: 1h0m0s
+            workspaces:
+            - name: workspace
+              volumeClaimTemplate:
+                spec:
+                  accessModes:
+                  - ReadWriteOnce
+                  resources:
+                    requests:
+                      storage: 1Gi
+            - name: k8-workspace
+              volumeClaimTemplate:
+                spec:
+                  accessModes:
+                  - ReadWriteOnce
+                  resources:
+                    requests:
+                      storage: 1Gi
+
+    # -------------------------------------------------------------------------
+    # 9. Register the catalog component from the code repo's catalog-info.yaml
     # -------------------------------------------------------------------------
     - id: register-catalog
       name: Register in Backstage Catalog
@@ -153,30 +240,17 @@ spec:
     text:
       - title: Next steps
         content: |
-          ArgoCD will sync `k8/gitops/` from the **${{ parameters.appName }}-k8** repo and create
-          the namespace, Deployment, Pipeline, Triggers, and EventListener automatically.
-
-          **1. Create the GitHub token secret** (required for the pipeline to push image digests):
-          ```
-          oc create secret generic github-token \
-            --from-literal=token=<your-github-token> \
-            -n ${{ parameters.appName }}
-          ```
-
-          **2. Start the first pipeline run** once ArgoCD has synced the Pipeline resource:
-          ```
-          oc create -f https://raw.githubusercontent.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-k8/main/k8/app/pipelinerun.yaml
-          ```
-
-          **3. Set up the GitHub webhook** to trigger builds on push to the code repo.
-          Get the EventListener URL after ArgoCD sync:
+          **Set up the GitHub webhook** to trigger pipeline builds on every push to the
+          code repo.  Get the EventListener URL once ArgoCD has synced:
           ```
           oc get route el-${{ parameters.appName }}-listener -n ${{ parameters.appName }} \
             -o jsonpath='https://{.spec.host}'
           ```
-          Then create the webhook secret:
+          Then create the webhook HMAC secret:
           ```
           oc create secret generic github-webhook-secret \
             --from-literal=secret=<random-string> \
             -n ${{ parameters.appName }}
           ```
+          Use that same random string when adding the webhook in GitHub
+          (Settings → Webhooks → Add webhook on the code repo).
