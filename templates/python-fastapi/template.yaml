@@ -109,23 +109,7 @@ spec:
         repoVisibility: public
 
     # -------------------------------------------------------------------------
-    # 5. Create ArgoCD Application — syncs k8/gitops/ resources (Deployment,
-    #    Service, Route, Pipeline, Triggers, EventListener) once the namespace
-    #    exists. The bootstrap workflow (step 6) creates the namespace first.
-    # -------------------------------------------------------------------------
-    - id: create-argocd-app
-      name: Create ArgoCD Application
-      action: argocd:create-resources
-      input:
-        appName: ${{ parameters.appName }}
-        argoInstance: default
-        namespace: openshift-gitops
-        repoUrl: https://github.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-k8.git
-        path: k8/gitops
-        labelValue: ${{ parameters.appName }}
-
-    # -------------------------------------------------------------------------
-    # 6. Dispatch the bootstrap GitHub Actions workflow in the k8 repo.
+    # 5. Dispatch the bootstrap GitHub Actions workflow in the k8 repo.
     #    The workflow: creates the OpenShift namespace (with the ArgoCD
     #    managed-by label), creates the github-token secret, waits for ArgoCD
     #    to sync the Pipeline, then starts the initial PipelineRun.

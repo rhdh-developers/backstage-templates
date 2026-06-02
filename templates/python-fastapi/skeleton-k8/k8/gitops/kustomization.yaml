@@ -1,9 +1,10 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# All resources here are managed by ArgoCD.
-# The ArgoCD Application is created by the RHDH template with createNamespace: true,
-# so the namespace is created automatically on first sync.
+# All resources here are managed by ArgoCD (project: default).
+# The bootstrap GitHub Actions workflow creates the namespace first and creates
+# the ArgoCD Application with CreateNamespace=true, so ArgoCD can also manage
+# the Namespace resource on subsequent syncs.
 
 resources:
   - namespace.yaml

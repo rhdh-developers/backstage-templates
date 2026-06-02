@@ -14,7 +14,7 @@ on:
 
 jobs:
   bootstrap:
-    name: Create namespace, secrets, and initial pipeline run
+    name: Create namespace, ArgoCD app, secrets, and initial pipeline run
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -32,8 +32,8 @@ jobs:
           openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
           insecure_skip_tls_verify: true
 
-      # Create the namespace and add the managed-by label so the OpenShift
-      # GitOps operator grants ArgoCD admin rights in it.
+      # Create the namespace and label it so the OpenShift GitOps operator
+      # grants the ArgoCD application controller admin rights in it.
       - name: Create and label namespace
         run: |
           oc new-project ${{ inputs.app_name }} || \
@@ -42,10 +42,42 @@ jobs:
             argocd.argoproj.io/managed-by=openshift-gitops \
             --overwrite
 
+      # Create the ArgoCD Application directly via oc apply in the
+      # openshift-gitops namespace using project: default.
+      # The default AppProject allows all cluster-scoped resources (including
+      # Namespace) and all destination namespaces — avoiding the broken
+      # AppProject that argocd:create-resources auto-generates.
+      - name: Create ArgoCD Application
+        run: |
+          oc apply -f - <<EOF
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: ${{ inputs.app_name }}
+            namespace: openshift-gitops
+            labels:
+              app.kubernetes.io/name: ${{ inputs.app_name }}
+              backstage.io/kubernetes-id: ${{ inputs.app_name }}
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/${{ inputs.github_org }}/${{ inputs.app_name }}-k8.git
+              targetRevision: main
+              path: k8/gitops
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: ${{ inputs.app_name }}
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+          EOF
+
       # Store a GitHub token in the namespace so the Tekton pipeline can push
       # updated image digests back to the k8 repo.
-      # GITHUB_TOKEN has write access to this (k8) repo which is all the
-      # pipeline needs for the commit-and-push task.
+      # GITHUB_TOKEN has write access to this repo — no extra secrets needed.
       - name: Create github-token secret
         run: |
           oc create secret generic github-token \
