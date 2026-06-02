@@ -51,19 +51,6 @@ spec:
               - Group
               - User
 
-    - title: Cluster Configuration
-      required:
-        - clusterRouterBase
-      properties:
-        clusterRouterBase:
-          title: Cluster Router Base Domain
-          type: string
-          default: apps.cluster.example.com
-          description: >
-            OpenShift cluster wildcard router base (e.g. apps.cluster.example.com).
-            Used to construct the Dev Spaces URL and the Tekton EventListener
-            webhook URL.
-
     - title: GitHub Pipeline Credentials
       required:
         - githubToken
@@ -91,7 +78,6 @@ spec:
           appName: ${{ parameters.appName }}
           githubOrg: ${{ parameters.githubOrg }}
           owner: ${{ parameters.owner }}
-          clusterRouterBase: ${{ parameters.clusterRouterBase }}
 
     # -------------------------------------------------------------------------
     # 2. Render k8s/gitops skeleton into ./k8 workspace directory
@@ -106,7 +92,6 @@ spec:
           appName: ${{ parameters.appName }}
           githubOrg: ${{ parameters.githubOrg }}
           owner: ${{ parameters.owner }}
-          clusterRouterBase: ${{ parameters.clusterRouterBase }}
 
     # -------------------------------------------------------------------------
     # 3. Publish source-code repo: <org>/<appName>-code
@@ -605,9 +590,6 @@ spec:
       - title: Open in Catalog
         icon: catalog
         entityRef: ${{ steps['register-catalog'].output.entityRef }}
-      - title: Open in Dev Spaces
-        url: https://devspaces.${{ parameters.clusterRouterBase }}/f?url=https://github.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-code
-        icon: web
       - title: Configure GitHub Webhook
         url: https://github.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-code/settings/hooks/new
         icon: github
@@ -615,9 +597,12 @@ spec:
       - title: Webhook URL for Tekton
         content: |
           Set up the GitHub webhook on the **${{ parameters.appName }}-code** repo to trigger
-          pipeline builds on push.  After ArgoCD deploys the EventListener, the webhook URL will be:
+          pipeline builds on push.  Retrieve the EventListener URL once the namespace is ready:
 
-          `https://el-${{ parameters.appName }}-listener-${{ parameters.appName }}.${{ parameters.clusterRouterBase }}`
+          ```
+          oc get route el-${{ parameters.appName }}-listener -n ${{ parameters.appName }} \
+            -o jsonpath='https://{.spec.host}'
+          ```
 
           Use a random string as the webhook secret and store it in a Kubernetes secret named
           `github-webhook-secret` (key: `secret`) in the `${{ parameters.appName }}` namespace.

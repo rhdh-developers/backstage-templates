@@ -23,9 +23,6 @@ metadata:
     - url: https://github.com/${{ values.githubOrg }}/${{ values.appName }}-k8
       title: Deployment Manifests (GitHub)
       icon: github
-    - url: https://devspaces.${{ values.clusterRouterBase }}/f?url=https://github.com/${{ values.githubOrg }}/${{ values.appName }}-code
-      title: Open in Dev Spaces
-      icon: web
 spec:
   type: service
   lifecycle: experimental

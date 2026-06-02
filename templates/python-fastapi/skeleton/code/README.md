@@ -21,9 +21,13 @@ Auto-generated docs at <http://localhost:8000/docs>.
 
 ## Dev Spaces
 
-Open directly in OpenShift Dev Spaces:
+Open this repo directly in OpenShift Dev Spaces using the factory URL:
 
-<https://devspaces.${{ values.clusterRouterBase }}/f?url=https://github.com/${{ values.githubOrg }}/${{ values.appName }}-code>
+```
+https://<your-devspaces-host>/f?url=https://github.com/${{ values.githubOrg }}/${{ values.appName }}-code
+```
+
+The Dev Spaces host is the route exposed by the OpenShift Dev Spaces operator in your cluster.
 
 ## CI/CD
 
