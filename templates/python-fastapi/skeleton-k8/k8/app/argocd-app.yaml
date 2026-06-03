@@ -1,6 +1,5 @@
-# Reference copy of the ArgoCD Application created by the RHDH template.
-# The live resource is in the rhdh-gitops namespace – do not apply this manually
-# unless you are re-creating the ArgoCD app from scratch.
+# ArgoCD Application – applied by the RHDH template bootstrap (oc) into
+# openshift-gitops. ArgoCD then syncs k8/gitops (Tekton, routes, deployment).
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -22,3 +21,5 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

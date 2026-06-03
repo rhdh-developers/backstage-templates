@@ -1,18 +1,18 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# All resources here are managed by ArgoCD (project: default).
-# The bootstrap GitHub Actions workflow creates the namespace first and creates
-# the ArgoCD Application with CreateNamespace=true, so ArgoCD can also manage
-# the Namespace resource on subsequent syncs.
+# All resources here are synced by the ArgoCD Application (path: k8/gitops).
+# The RHDH template registers the Application via oc; ArgoCD and Tekton handle
+# deployment, CI triggers, and the initial PostSync PipelineRun.
 
 resources:
   - namespace.yaml
-  - deployment.yaml
-  - service.yaml
-  - route.yaml
   - pipeline.yaml
   - triggerbinding.yaml
   - triggertemplate.yaml
   - eventlistener.yaml
   - eventlistener-route.yaml
+  - deployment.yaml
+  - service.yaml
+  - route.yaml
+  - pipelinerun-initial.yaml

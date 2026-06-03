@@ -120,26 +120,31 @@ spec:
         repoVisibility: public
 
     # -------------------------------------------------------------------------
-    # 5. Dispatch the bootstrap GitHub Actions workflow in the k8 repo.
-    #    The workflow: creates the OpenShift namespace (with the ArgoCD
-    #    managed-by label), creates the github-token secret, waits for ArgoCD
-    #    to sync the Pipeline, then starts the initial PipelineRun.
-    #    Requires OPENSHIFT_SERVER and OPENSHIFT_TOKEN GitHub org secrets.
+    # 5. Bootstrap OpenShift using oc in the RHDH pod (TOKEN, SERVER, GITHUB_PAT).
+    #    Registers the ArgoCD Application; ArgoCD syncs gitops; Tekton PostSync
+    #    hook runs the initial PipelineRun. No GitHub Actions.
     # -------------------------------------------------------------------------
-    - id: bootstrap
-      name: Bootstrap OpenShift Resources
-      action: github:actions:dispatch
+    - id: fetch-bootstrap-script
+      name: Fetch Bootstrap Script
+      action: fetch:plain
       input:
-        repoUrl: github.com?repo=${{ parameters.appName }}-k8&owner=${{ parameters.githubOrg }}
-        workflowId: bootstrap.yaml
-        branchOrTagName: main
-        workflowInputs:
-          app_name: ${{ parameters.appName }}
-          namespace: ${{ parameters.namespace }}
-          github_org: ${{ parameters.githubOrg }}
+        url: ./scripts
+        targetPath: ./scripts
+
+    - id: bootstrap-openshift
+      name: Bootstrap OpenShift (ArgoCD and Tekton)
+      action: run:command
+      input:
+        command: bash
+        args:
+          - ./scripts/bootstrap-openshift.sh
+        env:
+          APP_NAME: ${{ parameters.appName }}
+          NAMESPACE: ${{ parameters.namespace }}
+          GITHUB_ORG: ${{ parameters.githubOrg }}
 
     # -------------------------------------------------------------------------
-    # 7. Register the catalog component from the code repo's catalog-info.yaml
+    # 6. Register the catalog component from the code repo's catalog-info.yaml
     # -------------------------------------------------------------------------
     - id: register-catalog
       name: Register in Backstage Catalog
@@ -162,17 +167,14 @@ spec:
     text:
       - title: What happens next
         content: |
-          The **bootstrap** GitHub Actions workflow is running in the k8 repo.
-          It will automatically:
-          1. Create the `${{ parameters.namespace }}` OpenShift namespace with the ArgoCD label
-          2. Create the ArgoCD Application and deploy manifests from the k8 repo
-          3. Create the `github-token` secret so the pipeline can push image digests
-          4. Wait for ArgoCD to sync the Tekton Pipeline and EventListener route
-          5. Register a GitHub push webhook on `${{ parameters.appName }}-code`
-          6. Start the initial PipelineRun
+          OpenShift bootstrap has run from Developer Hub using **ArgoCD** and **Tekton** only:
+          1. Namespace `${{ parameters.namespace }}` (labeled for OpenShift GitOps)
+          2. ArgoCD Application syncing `k8/gitops` from the k8 repo
+          3. Tekton Pipeline, triggers, and EventListener route (via ArgoCD)
+          4. Initial **PipelineRun** (ArgoCD PostSync hook)
+          5. GitHub push webhook on `${{ parameters.appName }}-code` (if `GITHUB_PAT` is set in the pod)
 
-          Monitor progress at:
-          `https://github.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-k8/actions`
+          Monitor the ArgoCD app in the OpenShift GitOps UI or:
+          `oc get application ${{ parameters.appName }} -n openshift-gitops`
 
-          Open the new component in the catalog for links to source, manifests, Dev Spaces,
-          and the configured dynamic plugin tabs (Kubernetes, ArgoCD, Tekton).
+          Open the catalog component for Kubernetes, ArgoCD, Tekton, and repo links.

@@ -1,54 +1,40 @@
 # ${{ values.appName }}-k8
 
 Kubernetes / GitOps manifests for the `${{ values.appName }}` FastAPI service,
-scaffolded by Red Hat Developer Hub.
+managed by **ArgoCD** and **Tekton** on OpenShift. This repo does not use GitHub Actions.
 
 ## Structure
 
 ```
 k8/
-├── gitops/              # ArgoCD-managed resources (synced automatically)
+├── gitops/                    # Synced by ArgoCD (path in the Application spec)
+│   ├── namespace.yaml
+│   ├── pipeline.yaml          # Tekton Pipeline
+│   ├── triggerbinding.yaml
+│   ├── triggertemplate.yaml
+│   ├── eventlistener.yaml
+│   ├── eventlistener-route.yaml
 │   ├── deployment.yaml
 │   ├── service.yaml
 │   ├── route.yaml
-│   ├── pipeline.yaml    # Tekton Pipeline (kept in-sync by ArgoCD)
-│   └── kustomization.yaml
-└── app/                 # Reference / one-time resources
-    ├── pipelinerun.yaml   # Template for manual pipeline runs
-    ├── triggerbinding.yaml
-    ├── triggertemplate.yaml
-    ├── eventlistener.yaml # EventListener + Route for GitHub webhook
-    └── argocd-app.yaml    # Reference copy of the ArgoCD Application
+│   └── pipelinerun-initial.yaml   # ArgoCD PostSync – first build
+└── app/
+    ├── argocd-app.yaml        # Applied once by RHDH bootstrap (oc)
+    └── pipelinerun.yaml       # Manual / reference PipelineRun
 ```
 
 ## ArgoCD
 
-ArgoCD watches the `k8/gitops/` directory in this repo and automatically
-syncs any changes to the `${{ values.appName }}` namespace on OpenShift.
-
-Source repo: `https://github.com/${{ values.githubOrg }}/${{ values.appName }}-k8`
+The RHDH template applies `k8/app/argocd-app.yaml` into `openshift-gitops`.
+ArgoCD syncs `k8/gitops/` into namespace `${{ values.namespace }}`.
 
 ## Tekton CI
 
-The `k8/gitops/pipeline.yaml` pipeline:
+On each push to `${{ values.appName }}-code`, the EventListener starts a PipelineRun that:
 
-1. Clones `${{ values.appName }}-code` and builds a container image with Buildah.
-2. Clones this repo, updates `k8/gitops/deployment.yaml` with the new image digest.
-3. Commits and pushes back, triggering an ArgoCD sync and rolling deployment.
-
-### GitHub Webhook setup
-
-After the RHDH template creates the EventListener Route, add a webhook to the
-`${{ values.appName }}-code` repo:
-
-1. Go to **Settings → Webhooks → Add webhook** on the code repo.
-2. Payload URL: get it with
-   ```
-   oc get route el-${{ values.appName }}-listener -n ${{ values.namespace }} -o jsonpath='https://{.spec.host}'
-   ```
-3. Content type: `application/json`
-4. Secret: the value in the `github-webhook-secret` Kubernetes Secret (`secret` key).
-5. Trigger: **Just the push event**.
+1. Builds an image in the internal registry (`image-registry.openshift-image-registry.svc:5000/${{ values.namespace }}/${{ values.appName }}`)
+2. Updates `k8/gitops/deployment.yaml` in this repo
+3. ArgoCD rolls out the new image
 
 ### Manual pipeline run
 

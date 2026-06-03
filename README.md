@@ -14,28 +14,49 @@ Register this repo in RHDH via [`catalog-info.yaml`](catalog-info.yaml) (Locatio
 
 When a developer runs the template:
 
-1. **GitHub repos** – `<appName>-code` (FastAPI + `.devfile.yaml`) and `<appName>-k8` (manifests + bootstrap workflow)
-2. **OpenShift namespace** – from the `namespace` parameter (default `my-rest-api`)
-3. **ArgoCD** – Application syncing `k8/gitops` from the k8 repo
-4. **Tekton** – Pipeline in the namespace; push webhook on the code repo; initial PipelineRun
-5. **Catalog** – Component with links to source, manifests, and Dev Spaces; annotations for Kubernetes, ArgoCD, and Tekton plugins
-6. **Image registry** – Internal OpenShift registry: `image-registry.openshift-image-registry.svc:5000/<namespace>/<appName>`
+1. **GitHub repos** – `<appName>-code` (FastAPI + `.devfile.yaml`) and `<appName>-k8` (manifests only; no CI workflows in GitHub)
+2. **OpenShift namespace** – from the `namespace` parameter
+3. **ArgoCD** – Application in `openshift-gitops` syncing `k8/gitops` from the k8 repo
+4. **Tekton** – Pipeline, triggers, and EventListener managed by ArgoCD; initial build via ArgoCD **PostSync** hook; push builds via GitHub webhook
+5. **Catalog** – Component with Kubernetes, ArgoCD, and Tekton annotations
+6. **Image registry** – `image-registry.openshift-image-registry.svc:5000/<namespace>/<appName>`
 
-## Prerequisites (cluster / org)
+Deployment and CI use **OpenShift GitOps (ArgoCD)** and **Tekton** only—not GitHub Actions.
 
-Map the environment variables from the RHDH pod to **GitHub organization secrets** used by the bootstrap workflow in each new `<app>-k8` repo:
+## Prerequisites
 
-| GitHub org secret | RHDH pod env | Purpose |
-|-------------------|--------------|---------|
-| `OPENSHIFT_SERVER` | `SERVER` | OpenShift API URL |
-| `OPENSHIFT_TOKEN` | `TOKEN` | Cluster admin token |
-| `GITHUB_PAT` | `GITHUB_PAT` | Cross-repo git push and webhook creation (recommended) |
+### RHDH scaffolder pod
 
-RHDH itself needs a **GitHub integration** (e.g. GitHub App or PAT) for `publish:github` and `github:actions:dispatch`.
+| Variable | Purpose |
+|----------|---------|
+| `TOKEN` | OpenShift API token (bootstrap `oc login`) |
+| `SERVER` | OpenShift API URL |
+| `GITHUB_PAT` | Tekton `github-token` secret and GitHub push webhook on the code repo |
+| `oc` | OpenShift CLI in the scaffolder container image |
 
-### Optional: bootstrap from RHDH directly
+### RHDH scaffolder action
 
-The template uses a **GitHub Actions** bootstrap workflow so OpenShift credentials stay in org secrets rather than in the scaffolder task workspace. To run bootstrap from RHDH using `TOKEN` / `SERVER` in the pod, add a custom scaffolder action (e.g. `@backstage-community/plugin-scaffolder-backend-module-openshift` or an internal action) and replace the `github:actions:dispatch` step in `template.yaml`.
+The template uses the **`run:command`** scaffolder action to execute `scripts/bootstrap-openshift.sh`. Enable it on your hub, for example:
+
+```yaml
+# app-config (example – adjust for your RHDH version)
+backend:
+  scaffolder:
+    experimental:
+      runCommandAction: true
+```
+
+Or install `@backstage/plugin-scaffolder-backend-module-run` if your version requires the module explicitly.
+
+### Cluster
+
+- **OpenShift GitOps** (ArgoCD) in `openshift-gitops`
+- **OpenShift Pipelines** (Tekton)
+- `pipeline` ServiceAccount and RBAC in new namespaces (cluster default or your pipeline setup)
+
+### GitHub
+
+RHDH GitHub integration for `publish:github` (create repos).
 
 ## Form parameters
 
@@ -48,4 +69,4 @@ The template uses a **GitHub Actions** bootstrap workflow so OpenShift credentia
 
 ## Sample reference
 
-The [`sample-app/rest-api`](sample-app/rest-api) directory is the reference implementation the skeletons were derived from.
+[`sample-app/rest-api`](sample-app/rest-api) is the reference the skeletons were derived from.
