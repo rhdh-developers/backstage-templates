@@ -8,7 +8,7 @@ managed by **ArgoCD** and **Tekton** on OpenShift. This repo does not use GitHub
 ```
 k8/
 ├── gitops/                    # Synced by ArgoCD (path in the Application spec)
-│   ├── namespace.yaml
+│   ├── namespace.yaml         # Reference only (not in kustomization; created by template)
 │   ├── pipeline.yaml          # Tekton Pipeline
 │   ├── triggerbinding.yaml
 │   ├── triggertemplate.yaml
@@ -18,7 +18,7 @@ k8/
 │   ├── service.yaml
 │   └── route.yaml
 └── app/
-    ├── argocd-app.yaml        # Reference Application CR (created by argocd:create-resources)
+    ├── argocd-app.yaml        # Application CR with Namespace ignoreDifferences (apply after template)
     └── pipelinerun.yaml       # First / ad-hoc build (`oc create -f`; uses generateName)
 ```
 
@@ -28,10 +28,14 @@ k8/
 |--|--|
 | Control plane | ArgoCD CR **`openshift-gitops`** in namespace **`openshift-gitops`** |
 | Application CR | `Application/${{ values.appName }}` in **`openshift-gitops`** (created by `argocd:create-resources`) |
-| Git source | This repo, path `k8/gitops`, branch `main` |
-| Destination | Namespace **`${{ values.namespace }}`** on the cluster |
+| Git source | This repo, path `k8/gitops`, branch `main` (no `Namespace` in kustomization) |
+| Destination | Namespace **`${{ values.namespace }}`** on the cluster (pre-created by `kubernetes:create-namespace`) |
 
-Reference manifest: `k8/app/argocd-app.yaml`.
+Reference manifest: `k8/app/argocd-app.yaml` includes `ignoreDifferences` for the Namespace. After the template run, merge it onto the cluster Application:
+
+```bash
+oc apply -f k8/app/argocd-app.yaml -n openshift-gitops
+```
 
 OpenShift GitOps excludes `PipelineRun` / `TaskRun` from Argo CD reconciliation; the **Pipeline** and **EventListener** in `k8/gitops/` are still synced. Push-triggered runs are created by Tekton, not Argo CD.
 

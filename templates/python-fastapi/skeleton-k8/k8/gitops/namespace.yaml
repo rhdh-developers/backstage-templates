@@ -1,3 +1,5 @@
+# Reference only — not included in kustomization.yaml.
+# The template creates this namespace via kubernetes:create-namespace.
 apiVersion: v1
 kind: Namespace
 metadata:

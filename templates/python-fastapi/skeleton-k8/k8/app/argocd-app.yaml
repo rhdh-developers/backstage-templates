@@ -2,10 +2,12 @@
 #
 # - Argo CD operator CR: argoproj.io/v1beta1 ArgoCD named "openshift-gitops"
 #   in namespace "openshift-gitops" (NOT the app workload namespace).
-# - This Application CR is created in openshift-gitops by argocd:create-resources.
-# - Destination namespace (${{ values.namespace }}) receives synced k8/gitops manifests.
+# - Application CR lives in openshift-gitops; workloads sync to ${{ values.namespace }}.
+# - Namespace is created by kubernetes:create-namespace before this Application is registered.
+# - ignoreDifferences below keeps Argo CD from reconciling the Namespace (even if
+#   namespace.yaml is present in git for documentation).
 #
-# OpenShift GitOps excludes tekton.dev/TaskRun and PipelineRun from reconciliation;
+# OpenShift GitOps excludes tekton.dev/PipelineRun and TaskRun from reconciliation;
 # the Pipeline, triggers, and deployment still deploy from gitops.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -24,9 +26,18 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: ${{ values.namespace }}
+  ignoreDifferences:
+    - group: ""
+      kind: Namespace
+      name: ${{ values.namespace }}
+      jqPathExpressions:
+        - .
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
-      - CreateNamespace=true
+      - CreateNamespace=false
+      - RespectIgnoreDifferences=true
+      - FailOnSharedResource=true
+      - ServerSideApply=true

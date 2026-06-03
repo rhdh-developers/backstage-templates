@@ -15,10 +15,13 @@ Register this repo in RHDH via [`catalog-info.yaml`](catalog-info.yaml) (Locatio
 When a developer runs the template:
 
 1. **GitHub repos** – `<appName>-code` and `<appName>-k8` (no GitHub Actions workflows)
-2. **Argo CD Application** – via scaffolder action `argocd:create-resources` (syncs `k8/gitops`)
-3. **Tekton** – Pipeline, triggers, EventListener (synced by Argo CD); first build via `k8/app/pipelinerun.yaml`
-4. **Catalog** – Component with Kubernetes, Argo CD, and Tekton annotations
-5. **Image registry** – `image-registry.openshift-image-registry.svc:5000/<namespace>/<appName>`
+2. **OpenShift namespace** – via `kubernetes:create-namespace` (label `argocd.argoproj.io/managed-by=openshift-gitops`)
+3. **Argo CD Application** – via `argocd:create-resources` (syncs `k8/gitops`; Namespace not in git)
+4. **Tekton** – Pipeline, triggers, EventListener (synced by Argo CD); first build via `k8/app/pipelinerun.yaml`
+5. **Catalog** – Component with Kubernetes, Argo CD, and Tekton annotations
+6. **Image registry** – `image-registry.openshift-image-registry.svc:5000/<namespace>/<appName>`
+
+After the template run, apply `k8/app/argocd-app.yaml` from the k8 repo so the live Application CR includes `ignoreDifferences` for the Namespace (Roadie `argocd:create-resources` does not set that field).
 
 Deployment and CI use **OpenShift GitOps (Argo CD)** and **Tekton** only.
 
@@ -53,8 +56,11 @@ The template must find these actions under **Create → Actions** in Developer H
 | Action | Purpose |
 |--------|---------|
 | `publish:github` | Create repos |
+| `kubernetes:create-namespace` | Create the OpenShift project/namespace before GitOps sync |
 | `argocd:create-resources` | Register Argo CD Application for the k8 repo |
 | `catalog:register` | Register the component |
+
+Enable the Kubernetes scaffolder dynamic plugin on Developer Hub if `kubernetes:create-namespace` is missing ([RH Kubernetes custom actions](https://docs.redhat.com/en/documentation/red_hat_developer_hub/1.6/html/configuring_red_hat_developer_hub/ref-kubernetes-custom-actions)).
 
 If `argocd:create-resources` is missing, enable the Argo CD scaffolder module on Developer Hub (see [RH Argo CD plugin docs](https://docs.redhat.com/en/documentation/red_hat_plug-ins_for_backstage/2.0/html/argocd_plugin_for_backstage/argocd-plugin-for-backstage)). This repo does not ship RHDH configuration files.
 
@@ -93,6 +99,7 @@ oc get route "el-<app>-listener" -n "$NAMESPACE" -o jsonpath='https://{.spec.hos
 | Owner | `group:default/rhdh-developers` |
 | Namespace | `my-rest-api` |
 | RHDH Argo CD instance name | `default` on this hub (`instances[].name` in Argo CD plugin config) |
+| Kubernetes cluster (catalog) | `resource:default/local-cluster` (for `kubernetes:create-namespace`) |
 
 ## Optional: `run:command` bootstrap script
 

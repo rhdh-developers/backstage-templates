@@ -35,9 +35,18 @@ spec:
       destination:
         server: https://kubernetes.default.svc
         namespace: '{{ trimSuffix "-k8" .repository }}'
+      ignoreDifferences:
+        - group: ""
+          kind: Namespace
+          name: '{{ trimSuffix "-k8" .repository }}'
+          jqPathExpressions:
+            - .
       syncPolicy:
         automated:
           prune: true
           selfHeal: true
         syncOptions:
-          - CreateNamespace=true
+          - CreateNamespace=false
+          - RespectIgnoreDifferences=true
+          - FailOnSharedResource=true
+          - ServerSideApply=true
