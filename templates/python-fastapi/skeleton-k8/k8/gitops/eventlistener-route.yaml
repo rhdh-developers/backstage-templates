@@ -2,7 +2,7 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: el-${{ values.appName }}-listener
-  namespace: ${{ values.appName }}
+  namespace: ${{ values.namespace }}
 spec:
   port:
     targetPort: 8080

@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ${{ values.appName }}
-  namespace: ${{ values.appName }}
+  namespace: ${{ values.namespace }}
   labels:
     app: ${{ values.appName }}
     app.kubernetes.io/component: ${{ values.appName }}
@@ -30,7 +30,7 @@ spec:
       containers:
       - name: ${{ values.appName }}
         # image is updated by the Tekton pipeline after each build
-        image: image-registry.openshift-image-registry.svc:5000/${{ values.appName }}/${{ values.appName }}:latest
+        image: image-registry.openshift-image-registry.svc:5000/${{ values.namespace }}/${{ values.appName }}:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8000

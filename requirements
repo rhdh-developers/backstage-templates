@@ -1,29 +1,37 @@
 create a backstage template for template/python-fastapi
 
-the template will create two repos in github under the `rhdh-developers` org, one for source code (a skeleton template based on `sample-app/rest-api/code`) that can be opened in an ide (openshift dev spaces or cloned to a local ide), and another skeleton template for deployment (based on files found in `sample-app/rest-api/k8/*`) with openshift gitops (argoCD). assume dev hub has the github dev token available (environment variable GITHUB_PATH).
-Aslo
-cat /opt/app-root/src/app-config-rhdh.yaml | grep -A3 "github"
- ...
---
-  github:
-  - host: github.com
-    token: ghp_M5......
+the template will create two repos in github under the `rhdh-developers` org, one for source code (a skeleton template based on `sample-app/rest-api/code`) 
+that can be opened in an ide (openshift dev spaces or cloned to a local ide), and another skeleton template for deployment (based on files found in 
+`sample-app/rest-api/k8/*`) with openshift gitops (argoCD). assume dev hub has the github dev token available 
+
+environment variables set in the dev hub pod:
+
+export TOKEN="sha256~9iBM0ApGDY5sdubW7n4_7rTVP1j90OVuYvalHxSIQYI"
+export SERVER="https://api.cluster-psnpv.psnpv.sandbox1507.opentlc.com:6443"
+export GITHUB_PAT="ghp_M5....
+
+so it has admin token for openshift as well as the openshit api url
 
 When a developer wants to create a new fast-api app, the can select the template for it, and get a form where they fill out the parameters:
 
 application name: default - "my-rest-api"
 org (git hub org): default - "rhdh-developers"
-it will use the internal image registry
+owner (backstage user or group): default - "rhdh-developers"
+namespace: default - "my-rest-api"
+
+it will use the internal openshift image registry
 
 Once the form is sumbitted, developer hub will:
  
  - create new repos in the org based on the application name: <application name>-code (with tekton pipeline webhooks to trigger a build on commit/push) and <application mame>-k8
- - create a namespace that is <application name>
- - deploy the application with argoCD
- - create the pipeline and start a pipeline run
+ - create a namespace based in the namespace parameter
+ - deploy the application with argoCD using the k8 repo created in the previous step
+ - create the pipeline and start a pipeline run (in the namespace created in the previous step)
  - create a new catalog component for the rest-api
+ - create a dev spaces environment based on the code repo created in the previous step
  - provide a link to the catalog component
 
  the catalog component will display a number of tabs that have already been configured with dynamic plugins, along with a link to the source code (in github), and a link to the deployment manifests (in git hub), as well as a link to dev spaces. 
+
 
  let me know if you have additional questions

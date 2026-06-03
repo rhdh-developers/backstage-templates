@@ -4,7 +4,7 @@ apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
   generateName: ${{ values.appName }}-
-  namespace: ${{ values.appName }}
+  namespace: ${{ values.namespace }}
   labels:
     app.kubernetes.io/instance: ${{ values.appName }}
     app.kubernetes.io/name: ${{ values.appName }}
@@ -25,7 +25,7 @@ spec:
   - name: GIT_REVISION
     value: main
   - name: IMAGE_NAME
-    value: image-registry.openshift-image-registry.svc:5000/${{ values.appName }}/${{ values.appName }}
+    value: image-registry.openshift-image-registry.svc:5000/${{ values.namespace }}/${{ values.appName }}
   - name: PATH_CONTEXT
     value: .
   taskRunTemplate:

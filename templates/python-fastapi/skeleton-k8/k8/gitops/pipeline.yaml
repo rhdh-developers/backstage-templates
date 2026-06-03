@@ -2,7 +2,7 @@ apiVersion: tekton.dev/v1
 kind: Pipeline
 metadata:
   name: ${{ values.appName }}
-  namespace: ${{ values.appName }}
+  namespace: ${{ values.namespace }}
   labels:
     app.kubernetes.io/instance: ${{ values.appName }}
     app.kubernetes.io/name: ${{ values.appName }}
@@ -25,7 +25,7 @@ spec:
     default: main
   - name: IMAGE_NAME
     type: string
-    default: image-registry.openshift-image-registry.svc:5000/${{ values.appName }}/${{ values.appName }}
+    default: image-registry.openshift-image-registry.svc:5000/${{ values.namespace }}/${{ values.appName }}
   - name: PATH_CONTEXT
     type: string
     default: .

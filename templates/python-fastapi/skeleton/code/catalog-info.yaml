@@ -8,13 +8,15 @@ metadata:
     argocd/app-name: ${{ values.appName }}
     # Kubernetes integration (shows Pods/Deployments tab)
     backstage.io/kubernetes-id: ${{ values.appName }}
-    backstage.io/kubernetes-namespace: ${{ values.appName }}
+    backstage.io/kubernetes-namespace: ${{ values.namespace }}
     # Tekton integration (shows PipelineRuns tab)
     janus-idp.io/tekton-enabled: "true"
-    janus-idp.io/tekton-namespace: ${{ values.appName }}
+    janus-idp.io/tekton-namespace: ${{ values.namespace }}
+    # Dev Spaces – devfile in the code repo
+    che.eclipse.org/devfile-url: https://github.com/${{ values.githubOrg }}/${{ values.appName }}-code/blob/main/.devfile.yaml
     # Source code location for Backstage
     backstage.io/source-location: url:https://github.com/${{ values.githubOrg }}/${{ values.appName }}-code
-    # GitHub repo for SCM links
+    # GitHub repos for SCM links
     github.com/project-slug: ${{ values.githubOrg }}/${{ values.appName }}-code
   links:
     - url: https://github.com/${{ values.githubOrg }}/${{ values.appName }}-code

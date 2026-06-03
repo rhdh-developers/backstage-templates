@@ -2,7 +2,7 @@ apiVersion: triggers.tekton.dev/v1beta1
 kind: TriggerTemplate
 metadata:
   name: ${{ values.appName }}-template
-  namespace: ${{ values.appName }}
+  namespace: ${{ values.namespace }}
 spec:
   params:
   - name: git-repo-url
@@ -13,7 +13,7 @@ spec:
     kind: PipelineRun
     metadata:
       generateName: ${{ values.appName }}-
-      namespace: ${{ values.appName }}
+      namespace: ${{ values.namespace }}
       labels:
         app.kubernetes.io/instance: ${{ values.appName }}
         backstage.io/kubernetes-id: ${{ values.appName }}
@@ -31,7 +31,7 @@ spec:
       - name: GIT_REVISION
         value: $(tt.params.git-revision)
       - name: IMAGE_NAME
-        value: image-registry.openshift-image-registry.svc:5000/${{ values.appName }}/${{ values.appName }}
+        value: image-registry.openshift-image-registry.svc:5000/${{ values.namespace }}/${{ values.appName }}
       - name: GIT_K8_REPO
         value: https://github.com/${{ values.githubOrg }}/${{ values.appName }}-k8.git
       - name: PATH_CONTEXT

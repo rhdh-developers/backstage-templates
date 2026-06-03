@@ -4,7 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       app_name:
-        description: Application name (used as the OpenShift namespace)
+        description: Application name (Kubernetes resource and repo base name)
+        required: true
+        type: string
+      namespace:
+        description: OpenShift namespace for deployment and Tekton
         required: true
         type: string
       github_org:
@@ -14,7 +18,7 @@ on:
 
 jobs:
   bootstrap:
-    name: Create namespace, ArgoCD app, secrets, and initial pipeline run
+    name: Create namespace, ArgoCD app, secrets, webhook, and initial pipeline run
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -36,17 +40,14 @@ jobs:
       # grants the ArgoCD application controller admin rights in it.
       - name: Create and label namespace
         run: |
-          oc new-project ${{ inputs.app_name }} || \
-            echo "Namespace ${{ inputs.app_name }} already exists"
-          oc label namespace ${{ inputs.app_name }} \
+          oc new-project ${{ inputs.namespace }} || \
+            echo "Namespace ${{ inputs.namespace }} already exists"
+          oc label namespace ${{ inputs.namespace }} \
             argocd.argoproj.io/managed-by=openshift-gitops \
             --overwrite
 
       # Create the ArgoCD Application directly via oc apply in the
       # openshift-gitops namespace using project: default.
-      # The default AppProject allows all cluster-scoped resources (including
-      # Namespace) and all destination namespaces — avoiding the broken
-      # AppProject that argocd:create-resources auto-generates.
       - name: Create ArgoCD Application
         run: |
           oc apply -f - <<EOF
@@ -66,7 +67,7 @@ jobs:
               path: k8/gitops
             destination:
               server: https://kubernetes.default.svc
-              namespace: ${{ inputs.app_name }}
+              namespace: ${{ inputs.namespace }}
             syncPolicy:
               automated:
                 prune: true
@@ -76,13 +77,15 @@ jobs:
           EOF
 
       # Store a GitHub token in the namespace so the Tekton pipeline can push
-      # updated image digests back to the k8 repo.
-      # GITHUB_TOKEN has write access to this repo — no extra secrets needed.
+      # updated image digests back to the k8 repo. Prefer GITHUB_PAT for cross-repo access.
       - name: Create github-token secret
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
         run: |
+          TOKEN="${GITHUB_PAT:-${{ secrets.GITHUB_TOKEN }}}"
           oc create secret generic github-token \
-            --from-literal=token=${{ secrets.GITHUB_TOKEN }} \
-            -n ${{ inputs.app_name }} \
+            --from-literal=token="$TOKEN" \
+            -n ${{ inputs.namespace }} \
             --dry-run=client -o yaml | oc apply -f -
 
       # Wait for ArgoCD to sync the Pipeline resource (up to 5 minutes).
@@ -91,7 +94,7 @@ jobs:
           echo "Waiting for ArgoCD to sync Pipeline '${{ inputs.app_name }}'..."
           for i in $(seq 1 30); do
             if oc get pipeline ${{ inputs.app_name }} \
-                -n ${{ inputs.app_name }} &>/dev/null; then
+                -n ${{ inputs.namespace }} &>/dev/null; then
               echo "Pipeline found after $((i * 10))s"
               exit 0
             fi
@@ -102,11 +105,64 @@ jobs:
           echo "Run the first pipeline manually once ArgoCD sync completes."
           exit 0
 
+      # Wait for the EventListener Route (created by ArgoCD from gitops manifests).
+      - name: Wait for EventListener route
+        run: |
+          echo "Waiting for EventListener route el-${{ inputs.app_name }}-listener..."
+          for i in $(seq 1 30); do
+            if oc get route "el-${{ inputs.app_name }}-listener" \
+                -n ${{ inputs.namespace }} &>/dev/null; then
+              echo "Route found after $((i * 10))s"
+              exit 0
+            fi
+            echo "  attempt $i/30 — waiting 10s..."
+            sleep 10
+          done
+          echo "WARNING: EventListener route not found — skipping webhook setup"
+          exit 0
+
+      # Register GitHub push webhook on the code repo (Tekton CI on push).
+      - name: Configure GitHub push webhook
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
+        run: |
+          if ! oc get route "el-${{ inputs.app_name }}-listener" \
+              -n ${{ inputs.namespace }} &>/dev/null; then
+            echo "EventListener route missing — skipping webhook"
+            exit 0
+          fi
+          TOKEN="${GITHUB_PAT:-${{ secrets.GITHUB_TOKEN }}}"
+          WEBHOOK_SECRET=$(openssl rand -hex 20)
+          oc create secret generic github-webhook-secret \
+            --from-literal=secret="$WEBHOOK_SECRET" \
+            -n ${{ inputs.namespace }} \
+            --dry-run=client -o yaml | oc apply -f -
+          LISTENER_URL=$(oc get route "el-${{ inputs.app_name }}-listener" \
+            -n ${{ inputs.namespace }} -o jsonpath='https://{.spec.host}')
+          REPO="${{ inputs.github_org }}/${{ inputs.app_name }}-code"
+          PAYLOAD=$(jq -n \
+            --arg url "$LISTENER_URL" \
+            --arg secret "$WEBHOOK_SECRET" \
+            '{name: "web", active: true, events: ["push"], config: {url: $url, content_type: "json", insecure_ssl: "0", secret: $secret}}')
+          HTTP_CODE=$(curl -sS -o /tmp/gh-hook-response.json -w "%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${REPO}/hooks" \
+            -d "$PAYLOAD")
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "GitHub webhook created for ${REPO} → ${LISTENER_URL}"
+          else
+            echo "WARNING: GitHub webhook creation returned HTTP ${HTTP_CODE}"
+            cat /tmp/gh-hook-response.json
+          fi
+
       # Start the initial build so the app is deployed on first run.
       - name: Start initial PipelineRun
         run: |
           if ! oc get pipeline ${{ inputs.app_name }} \
-              -n ${{ inputs.app_name }} &>/dev/null; then
+              -n ${{ inputs.namespace }} &>/dev/null; then
             echo "Pipeline not ready — skipping initial PipelineRun"
             exit 0
           fi
@@ -115,7 +171,7 @@ jobs:
           kind: PipelineRun
           metadata:
             generateName: ${{ inputs.app_name }}-initial-
-            namespace: ${{ inputs.app_name }}
+            namespace: ${{ inputs.namespace }}
             labels:
               app.kubernetes.io/instance: ${{ inputs.app_name }}
               backstage.io/kubernetes-id: ${{ inputs.app_name }}
@@ -133,7 +189,7 @@ jobs:
             - name: GIT_REVISION
               value: main
             - name: IMAGE_NAME
-              value: image-registry.openshift-image-registry.svc:5000/${{ inputs.app_name }}/${{ inputs.app_name }}
+              value: image-registry.openshift-image-registry.svc:5000/${{ inputs.namespace }}/${{ inputs.app_name }}
             - name: PATH_CONTEXT
               value: .
             taskRunTemplate:

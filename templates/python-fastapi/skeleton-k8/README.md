@@ -44,7 +44,7 @@ After the RHDH template creates the EventListener Route, add a webhook to the
 1. Go to **Settings → Webhooks → Add webhook** on the code repo.
 2. Payload URL: get it with
    ```
-   oc get route el-${{ values.appName }}-listener -n ${{ values.appName }} -o jsonpath='https://{.spec.host}'
+   oc get route el-${{ values.appName }}-listener -n ${{ values.namespace }} -o jsonpath='https://{.spec.host}'
    ```
 3. Content type: `application/json`
 4. Secret: the value in the `github-webhook-secret` Kubernetes Secret (`secret` key).
@@ -53,5 +53,5 @@ After the RHDH template creates the EventListener Route, add a webhook to the
 ### Manual pipeline run
 
 ```bash
-oc apply -f k8/app/pipelinerun.yaml -n ${{ values.appName }}
+oc apply -f k8/app/pipelinerun.yaml -n ${{ values.namespace }}
 ```

@@ -5,9 +5,9 @@ metadata:
   title: Python FastAPI Application
   description: >
     Creates a Python FastAPI REST API service with two GitHub repos (source code
-    and deployment manifests), a Tekton CI pipeline, and an ArgoCD-managed
-    OpenShift deployment. Registers a Backstage catalog component with links to
-    source and manifests.
+    and deployment manifests), OpenShift namespace, Tekton CI with GitHub push
+    webhook, ArgoCD GitOps deployment, Dev Spaces devfile, and a Backstage catalog
+    component with Kubernetes, ArgoCD, and Tekton plugin annotations.
   tags:
     - python
     - fastapi
@@ -16,7 +16,7 @@ metadata:
     - tekton
     - argocd
 spec:
-  owner: user:default/bugbiteme
+  owner: group:default/rhdh-developers
   type: service
 
   parameters:
@@ -25,6 +25,7 @@ spec:
         - appName
         - githubOrg
         - owner
+        - namespace
       properties:
         appName:
           title: Application Name
@@ -32,8 +33,7 @@ spec:
           default: my-rest-api
           description: >
             Lowercase name for your application. Used as the base name for both
-            GitHub repos (<name>-code and <name>-k8), the OpenShift namespace,
-            and all Kubernetes resources.
+            GitHub repos (<name>-code and <name>-k8) and Kubernetes resource names.
           pattern: '^[a-z][a-z0-9-]{1,28}[a-z0-9]$'
           ui:autofocus: true
         githubOrg:
@@ -44,12 +44,21 @@ spec:
         owner:
           title: Owner
           type: string
+          default: group:default/rhdh-developers
           description: Backstage owner of this component (user or group).
           ui:field: OwnerPicker
           ui:options:
             allowedKinds:
               - Group
               - User
+        namespace:
+          title: OpenShift Namespace
+          type: string
+          default: my-rest-api
+          description: >
+            OpenShift namespace for the deployment, Tekton pipeline, and ArgoCD
+            sync target. Usually matches the application name.
+          pattern: '^[a-z][a-z0-9-]{1,28}[a-z0-9]$'
 
   steps:
     # -------------------------------------------------------------------------
@@ -65,6 +74,7 @@ spec:
           appName: ${{ parameters.appName }}
           githubOrg: ${{ parameters.githubOrg }}
           owner: ${{ parameters.owner }}
+          namespace: ${{ parameters.namespace }}
 
     # -------------------------------------------------------------------------
     # 2. Render k8s/gitops skeleton into ./k8 workspace directory
@@ -79,6 +89,7 @@ spec:
           appName: ${{ parameters.appName }}
           githubOrg: ${{ parameters.githubOrg }}
           owner: ${{ parameters.owner }}
+          namespace: ${{ parameters.namespace }}
 
     # -------------------------------------------------------------------------
     # 3. Publish source-code repo: <org>/<appName>-code
@@ -124,6 +135,7 @@ spec:
         branchOrTagName: main
         workflowInputs:
           app_name: ${{ parameters.appName }}
+          namespace: ${{ parameters.namespace }}
           github_org: ${{ parameters.githubOrg }}
 
     # -------------------------------------------------------------------------
@@ -147,33 +159,20 @@ spec:
       - title: Open in Catalog
         icon: catalog
         entityRef: ${{ steps['register-catalog'].output.entityRef }}
-      - title: Configure GitHub Webhook
-        url: https://github.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-code/settings/hooks/new
-        icon: github
     text:
       - title: What happens next
         content: |
           The **bootstrap** GitHub Actions workflow is running in the k8 repo.
           It will automatically:
-          1. Create the `${{ parameters.appName }}` OpenShift namespace with the ArgoCD label
-          2. Create the `github-token` secret so the pipeline can push image digests
-          3. Wait for ArgoCD to sync the Tekton Pipeline
-          4. Start the initial PipelineRun
+          1. Create the `${{ parameters.namespace }}` OpenShift namespace with the ArgoCD label
+          2. Create the ArgoCD Application and deploy manifests from the k8 repo
+          3. Create the `github-token` secret so the pipeline can push image digests
+          4. Wait for ArgoCD to sync the Tekton Pipeline and EventListener route
+          5. Register a GitHub push webhook on `${{ parameters.appName }}-code`
+          6. Start the initial PipelineRun
 
           Monitor progress at:
           `https://github.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-k8/actions`
 
-          **One remaining manual step — GitHub webhook** (triggers builds on every push):
-          Once the bootstrap workflow completes, get the EventListener URL:
-          ```
-          oc get route el-${{ parameters.appName }}-listener -n ${{ parameters.appName }} \
-            -o jsonpath='https://{.spec.host}'
-          ```
-          Create the webhook HMAC secret in OpenShift:
-          ```
-          oc create secret generic github-webhook-secret \
-            --from-literal=secret=<random-string> \
-            -n ${{ parameters.appName }}
-          ```
-          Add the webhook in GitHub (Settings → Webhooks on the code repo)
-          pointing to that URL with the same random string as the secret.
+          Open the new component in the catalog for links to source, manifests, Dev Spaces,
+          and the configured dynamic plugin tabs (Kubernetes, ArgoCD, Tekton).
