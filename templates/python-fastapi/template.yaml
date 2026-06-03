@@ -33,8 +33,9 @@ spec:
           type: string
           default: my-rest-api
           description: >
-            Lowercase name for your application. Used as the base name for both
-            GitHub repos (<name>-code and <name>-k8) and Kubernetes resource names.
+            Unique name for this app: GitHub repos (<name>-code, <name>-k8), Argo CD
+            Application, and Kubernetes object names (e.g. my-rest-api-125). Independent
+            of the OpenShift namespace below—many apps can share one namespace.
           pattern: '^[a-z][a-z0-9-]{1,28}[a-z0-9]$'
           ui:autofocus: true
         githubOrg:
@@ -57,12 +58,13 @@ spec:
           type: string
           default: my-rest-api
           description: >
-            Existing OpenShift namespace (project) for deployment, Tekton, and Argo CD.
-            Must be created before running this template. Usually matches the application name.
+            Existing OpenShift project where this app's workloads are deployed (Argo CD
+            sync destination, Tekton, Deployment, Routes, image stream path). Must exist
+            before the template runs. Change only if you target a different project.
           pattern: '^[a-z][a-z0-9-]{1,28}[a-z0-9]$'
           ui:help: >
-            Cluster admin: oc create namespace <name> &&
-            oc label namespace <name> argocd.argoproj.io/managed-by=openshift-gitops
+            Example: Application Name my-rest-api-125 with Namespace my-rest-api deploys
+            into project my-rest-api. Pre-create: oc create namespace <name>
         argoInstance:
           title: RHDH Argo CD instance name
           type: string
@@ -171,12 +173,15 @@ spec:
     text:
       - title: What happens next
         content: |
-          **Prerequisite:** OpenShift namespace **`${{ parameters.namespace }}`** must already
-          exist (with label `argocd.argoproj.io/managed-by=openshift-gitops` recommended).
+          **Application name:** `${{ parameters.appName }}` (repos, Argo CD Application, K8s names)  
+          **OpenShift namespace:** `${{ parameters.namespace }}` (deployment target—all components)
+
+          Namespace must already exist. Application name and namespace are independent
+          (e.g. app `my-rest-api-125` in namespace `my-rest-api`).
 
           **Argo CD** (RHDH instance `${{ parameters.argoInstance }}`) registered Application
-          `${{ parameters.appName }}` in namespace `openshift-gitops`, syncing `k8/gitops`
-          into **`${{ parameters.namespace }}**.
+          `${{ parameters.appName }}` in `openshift-gitops`, syncing `k8/gitops` into
+          **`${{ parameters.namespace }}`**.
 
           Apply ignore rules on the live Application CR (if not already present):
           `oc apply -f https://raw.githubusercontent.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-k8/main/k8/app/argocd-app.yaml -n openshift-gitops`

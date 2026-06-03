@@ -22,7 +22,7 @@ When a developer runs the template:
 
 ### Prerequisite: namespace exists
 
-The template does **not** create the OpenShift project. A cluster admin creates it before developers run the template:
+The template does **not** create the OpenShift project. **OpenShift Namespace** on the form is the deployment target; **Application Name** is only for repos and resource names (they may differ, e.g. app `my-rest-api-125` in namespace `my-rest-api`). A cluster admin creates the namespace before developers run the template:
 
 ```bash
 export NAMESPACE=my-rest-api
@@ -100,10 +100,10 @@ oc get route "el-<app>-listener" -n "$NAMESPACE" -o jsonpath='https://{.spec.hos
 
 | Field | Default |
 |-------|---------|
-| Application name | `my-rest-api` |
+| Application name | `my-rest-api` (unique per app; repos and K8s object names) |
 | GitHub org | `rhdh-developers` |
 | Owner | `group:default/rhdh-developers` |
-| Namespace | `my-rest-api` |
+| OpenShift namespace | `my-rest-api` (shared deployment target; must already exist) |
 | RHDH Argo CD instance name | `default` on this hub (`instances[].name` in Argo CD plugin config) |
 
 ## Optional: `run:command` bootstrap script

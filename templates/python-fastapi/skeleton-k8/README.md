@@ -29,7 +29,7 @@ k8/
 | Control plane | ArgoCD CR **`openshift-gitops`** in namespace **`openshift-gitops`** |
 | Application CR | `Application/${{ values.appName }}` in **`openshift-gitops`** (created by `argocd:create-resources`) |
 | Git source | This repo, path `k8/gitops`, branch `main` (no Namespace in kustomization) |
-| Destination | Existing namespace **`${{ values.namespace }}`** (created before the template run) |
+| Destination | Existing namespace **`${{ values.namespace }}`** (form field; app name **`${{ values.appName }}`** may differ) |
 
 Reference manifest: `k8/app/argocd-app.yaml` includes `ignoreDifferences` for the Namespace. After the template run, merge it onto the cluster Application:
 
