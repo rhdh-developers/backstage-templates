@@ -5,8 +5,8 @@ metadata:
   title: Python FastAPI Application
   description: >
     Creates a Python FastAPI REST API service with two GitHub repos (source code
-    and deployment manifests), OpenShift namespace, Tekton CI with GitHub push
-    webhook, ArgoCD GitOps deployment, Dev Spaces devfile, and a Backstage catalog
+    and deployment manifests) into a pre-existing OpenShift namespace, Tekton CI with
+    GitHub push webhook, ArgoCD GitOps deployment, Dev Spaces devfile, and a Backstage catalog
     component with Kubernetes, ArgoCD, and Tekton plugin annotations.
   tags:
     - python
@@ -57,9 +57,12 @@ spec:
           type: string
           default: my-rest-api
           description: >
-            OpenShift namespace for the deployment, Tekton pipeline, and ArgoCD
-            sync target. Usually matches the application name.
+            Existing OpenShift namespace (project) for deployment, Tekton, and Argo CD.
+            Must be created before running this template. Usually matches the application name.
           pattern: '^[a-z][a-z0-9-]{1,28}[a-z0-9]$'
+          ui:help: >
+            Cluster admin: oc create namespace <name> &&
+            oc label namespace <name> argocd.argoproj.io/managed-by=openshift-gitops
         argoInstance:
           title: RHDH Argo CD instance name
           type: string
@@ -131,8 +134,7 @@ spec:
 
     # -------------------------------------------------------------------------
     # 5. Create Argo CD Application in namespace openshift-gitops. Syncs k8/gitops
-    #    (including Namespace). Application ignoreDifferences skips Namespace drift
-    #    after the initial sync (see k8/app/argocd-app.yaml). Requires argocd:create-resources.
+    #    into the pre-existing app namespace. Requires argocd:create-resources.
     # -------------------------------------------------------------------------
     - id: create-argocd-app
       name: Create Argo CD Application
@@ -169,9 +171,12 @@ spec:
     text:
       - title: What happens next
         content: |
+          **Prerequisite:** OpenShift namespace **`${{ parameters.namespace }}`** must already
+          exist (with label `argocd.argoproj.io/managed-by=openshift-gitops` recommended).
+
           **Argo CD** (RHDH instance `${{ parameters.argoInstance }}`) registered Application
           `${{ parameters.appName }}` in namespace `openshift-gitops`, syncing `k8/gitops`
-          into `${{ parameters.namespace }}` (Namespace created on first sync from git).
+          into **`${{ parameters.namespace }}**.
 
           Apply ignore rules on the live Application CR (if not already present):
           `oc apply -f https://raw.githubusercontent.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-k8/main/k8/app/argocd-app.yaml -n openshift-gitops`

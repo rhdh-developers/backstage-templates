@@ -8,7 +8,7 @@ managed by **ArgoCD** and **Tekton** on OpenShift. This repo does not use GitHub
 ```
 k8/
 ├── gitops/                    # Synced by ArgoCD (path in the Application spec)
-│   ├── namespace.yaml         # OpenShift project (first Argo CD sync)
+│   ├── namespace.yaml         # Reference only (namespace created before template run)
 │   ├── pipeline.yaml          # Tekton Pipeline
 │   ├── triggerbinding.yaml
 │   ├── triggertemplate.yaml
@@ -28,8 +28,8 @@ k8/
 |--|--|
 | Control plane | ArgoCD CR **`openshift-gitops`** in namespace **`openshift-gitops`** |
 | Application CR | `Application/${{ values.appName }}` in **`openshift-gitops`** (created by `argocd:create-resources`) |
-| Git source | This repo, path `k8/gitops`, branch `main` (includes `namespace.yaml`) |
-| Destination | Namespace **`${{ values.namespace }}`** on the cluster |
+| Git source | This repo, path `k8/gitops`, branch `main` (no Namespace in kustomization) |
+| Destination | Existing namespace **`${{ values.namespace }}`** (created before the template run) |
 
 Reference manifest: `k8/app/argocd-app.yaml` includes `ignoreDifferences` for the Namespace. After the template run, merge it onto the cluster Application:
 

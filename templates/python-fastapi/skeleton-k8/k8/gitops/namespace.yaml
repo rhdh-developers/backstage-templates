@@ -1,3 +1,7 @@
+# Reference only — not in kustomization.yaml.
+# Create the OpenShift project before running the template, e.g.:
+#   oc create namespace ${{ values.namespace }}
+#   oc label namespace ${{ values.namespace }} argocd.argoproj.io/managed-by=openshift-gitops
 apiVersion: v1
 kind: Namespace
 metadata:

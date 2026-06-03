@@ -2,12 +2,10 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 # Synced by the Argo CD Application in namespace openshift-gitops (path: k8/gitops).
-# Namespace is created on first Argo CD sync; ignoreDifferences on the Application
-# (k8/app/argocd-app.yaml) prevents ongoing Namespace reconciliation.
-# OpenShift GitOps does not reconcile tekton.dev/PipelineRun or TaskRun.
+# The app namespace must already exist (not managed from git). OpenShift GitOps does
+# not reconcile tekton.dev/PipelineRun or TaskRun.
 
 resources:
-  - namespace.yaml
   - pipeline.yaml
   - triggerbinding.yaml
   - triggertemplate.yaml

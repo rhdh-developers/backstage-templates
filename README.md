@@ -15,10 +15,20 @@ Register this repo in RHDH via [`catalog-info.yaml`](catalog-info.yaml) (Locatio
 When a developer runs the template:
 
 1. **GitHub repos** – `<appName>-code` and `<appName>-k8` (no GitHub Actions workflows)
-2. **Argo CD Application** – via `argocd:create-resources` (syncs `k8/gitops`, including Namespace on first sync)
+2. **Argo CD Application** – via `argocd:create-resources` (syncs `k8/gitops` into an existing namespace)
 3. **Tekton** – Pipeline, triggers, EventListener (synced by Argo CD); first build via `k8/app/pipelinerun.yaml`
 4. **Catalog** – Component with Kubernetes, Argo CD, and Tekton annotations
 5. **Image registry** – `image-registry.openshift-image-registry.svc:5000/<namespace>/<appName>`
+
+### Prerequisite: namespace exists
+
+The template does **not** create the OpenShift project. A cluster admin creates it before developers run the template:
+
+```bash
+export NAMESPACE=my-rest-api
+oc create namespace "$NAMESPACE"
+oc label namespace "$NAMESPACE" argocd.argoproj.io/managed-by=openshift-gitops
+```
 
 After the template run, apply `k8/app/argocd-app.yaml` from the k8 repo so the live Application CR includes `ignoreDifferences` for the Namespace (Roadie `argocd:create-resources` does not set that field).
 
@@ -32,8 +42,8 @@ Deployment and CI use **OpenShift GitOps (Argo CD)** and **Tekton** only.
 | Operator / control plane namespace | **`openshift-gitops`** |
 | Application CRs (per app) | `Application/<appName>` in **`openshift-gitops`** |
 | Synced manifests (git path) | `<app>-k8` repo → `k8/gitops/` |
-| Workload namespace (destination) | Template parameter **`namespace`** (e.g. `my-rest-api`) |
-| Namespace label | `argocd.argoproj.io/managed-by=openshift-gitops` |
+| Workload namespace (destination) | Template parameter **`namespace`** — must **already exist** |
+| Recommended namespace label | `argocd.argoproj.io/managed-by=openshift-gitops` |
 
 OpenShift GitOps is configured with **resource exclusions** for `tekton.dev/PipelineRun` and `TaskRun`. Argo CD still syncs the Tekton **Pipeline**, **EventListener**, and other gitops resources; CI runs are not continuously reconciled by Argo CD (expected). The first build is started with `oc create -f k8/app/pipelinerun.yaml`; later runs come from the GitHub webhook → EventListener.
 
@@ -57,10 +67,6 @@ The template must find these actions under **Create → Actions** in Developer H
 | `publish:github` | Create repos |
 | `argocd:create-resources` | Register Argo CD Application for the k8 repo |
 | `catalog:register` | Register the component |
-
-The **Kubernetes backend** plugin (`K8S_CLUSTER_*` / service account) powers the catalog **Kubernetes** tab only. It does **not** authenticate the scaffolder action `kubernetes:create-namespace`, which always requires an explicit `token` in the template. This template creates the OpenShift project via **Argo CD** (`k8/gitops/namespace.yaml`) instead, with `ignoreDifferences` on the Application so Argo CD does not keep reconciling the Namespace after the first sync.
-
-If you later want a scaffolder step to create namespaces, enable [RH Kubernetes custom actions](https://docs.redhat.com/en/documentation/red_hat_developer_hub/1.9/html/configuring_dynamic_plugins/kubernetes-custom-actions-in-rhdh_install-the-topology-plugin) and supply a token (form secret or `scaffolder.defaultEnvironment.secrets` from the pod `TOKEN` env).
 
 If `argocd:create-resources` is missing, enable the Argo CD scaffolder module on Developer Hub (see [RH Argo CD plugin docs](https://docs.redhat.com/en/documentation/red_hat_plug-ins_for_backstage/2.0/html/argocd_plugin_for_backstage/argocd-plugin-for-backstage)). This repo does not ship RHDH configuration files.
 
