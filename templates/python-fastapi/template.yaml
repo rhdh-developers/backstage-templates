@@ -119,6 +119,7 @@ spec:
         sourcePath: ./code
         gitCommitMessage: "chore: initial scaffold from RHDH template"
         repoVisibility: public
+        protectDefaultBranch: false 
 
     # -------------------------------------------------------------------------
     # 4. Publish k8s manifests repo: <org>/<appName>-k8
@@ -133,6 +134,7 @@ spec:
         sourcePath: ./k8
         gitCommitMessage: "chore: initial scaffold from RHDH template"
         repoVisibility: public
+        protectDefaultBranch: false 
 
     # -------------------------------------------------------------------------
     # 5. Create Argo CD Application in namespace openshift-gitops. Syncs k8/gitops
