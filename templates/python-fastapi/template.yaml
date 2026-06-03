@@ -130,9 +130,8 @@ spec:
         repoVisibility: public
 
     # -------------------------------------------------------------------------
-    # 5. Create Argo CD Application in namespace openshift-gitops (OpenShift GitOps
-    #    operator). Syncs k8/gitops into the app namespace. Initial PipelineRun via
-    #    PostSync hook. Requires argocd:create-resources (see README).
+    # 5. Create Argo CD Application in namespace openshift-gitops. Syncs k8/gitops
+    #    into the app namespace. Requires argocd:create-resources.
     # -------------------------------------------------------------------------
     - id: create-argocd-app
       name: Create Argo CD Application
@@ -188,6 +187,10 @@ spec:
           Then add a GitHub **push** webhook on `${{ parameters.appName }}-code` pointing to:
           `oc get route el-${{ parameters.appName }}-listener -n ${{ parameters.namespace }} -o jsonpath='https://{.spec.host}'`
           using `$WEBHOOK_SECRET` as the webhook secret.
+
+          Start the **first build** after Argo CD syncs the Pipeline:
+          `oc create -f https://raw.githubusercontent.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-k8/main/k8/app/pipelinerun.yaml -n ${{ parameters.namespace }}`
+          (or clone the k8 repo and run `oc create -f k8/app/pipelinerun.yaml -n ${{ parameters.namespace }}`)
 
           Monitor Argo CD:
           `oc get application ${{ parameters.appName }} -n openshift-gitops`

@@ -16,7 +16,7 @@ When a developer runs the template:
 
 1. **GitHub repos** – `<appName>-code` and `<appName>-k8` (no GitHub Actions workflows)
 2. **Argo CD Application** – via scaffolder action `argocd:create-resources` (syncs `k8/gitops`)
-3. **Tekton** – Pipeline, triggers, EventListener (synced by Argo CD); first build via Argo CD **PostSync** hook
+3. **Tekton** – Pipeline, triggers, EventListener (synced by Argo CD); first build via `k8/app/pipelinerun.yaml`
 4. **Catalog** – Component with Kubernetes, Argo CD, and Tekton annotations
 5. **Image registry** – `image-registry.openshift-image-registry.svc:5000/<namespace>/<appName>`
 
@@ -33,7 +33,7 @@ Deployment and CI use **OpenShift GitOps (Argo CD)** and **Tekton** only.
 | Workload namespace (destination) | Template parameter **`namespace`** (e.g. `my-rest-api`) |
 | Namespace label | `argocd.argoproj.io/managed-by=openshift-gitops` |
 
-OpenShift GitOps is configured with **resource exclusions** for `tekton.dev/PipelineRun` and `TaskRun`. Argo CD still syncs the Tekton **Pipeline**, **EventListener**, and other gitops resources; CI runs are not continuously reconciled by Argo CD (expected). The template uses a **PostSync** hook for the first `PipelineRun`; later runs come from the GitHub webhook → EventListener.
+OpenShift GitOps is configured with **resource exclusions** for `tekton.dev/PipelineRun` and `TaskRun`. Argo CD still syncs the Tekton **Pipeline**, **EventListener**, and other gitops resources; CI runs are not continuously reconciled by Argo CD (expected). The first build is started with `oc create -f k8/app/pipelinerun.yaml`; later runs come from the GitHub webhook → EventListener.
 
 ### RHDH Argo CD instance name (template form)
 

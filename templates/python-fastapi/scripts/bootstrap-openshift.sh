@@ -106,4 +106,4 @@ if [[ -n "${GITHUB_PAT:-}" ]]; then
   fi
 fi
 
-echo "Bootstrap complete. ArgoCD PostSync hook will start the initial Tekton PipelineRun when sync finishes."
+echo "Bootstrap complete. Run the initial PipelineRun: oc create -f k8/app/pipelinerun.yaml -n ${NAMESPACE}"

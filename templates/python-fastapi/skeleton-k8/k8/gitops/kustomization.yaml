@@ -15,4 +15,4 @@ resources:
   - deployment.yaml
   - service.yaml
   - route.yaml
-  - pipelinerun-initial.yaml
+  # Initial PipelineRun: use k8/app/pipelinerun.yaml (generateName is invalid in Kustomize)

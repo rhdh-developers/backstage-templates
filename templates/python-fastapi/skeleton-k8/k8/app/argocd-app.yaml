@@ -6,7 +6,7 @@
 # - Destination namespace (${{ values.namespace }}) receives synced k8/gitops manifests.
 #
 # OpenShift GitOps excludes tekton.dev/TaskRun and PipelineRun from reconciliation;
-# the Pipeline, triggers, and PostSync hook PipelineRun still deploy from gitops.
+# the Pipeline, triggers, and deployment still deploy from gitops.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:

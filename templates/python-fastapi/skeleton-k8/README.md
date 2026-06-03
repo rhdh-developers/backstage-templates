@@ -16,11 +16,10 @@ k8/
 │   ├── eventlistener-route.yaml
 │   ├── deployment.yaml
 │   ├── service.yaml
-│   ├── route.yaml
-│   └── pipelinerun-initial.yaml   # ArgoCD PostSync – first build
+│   └── route.yaml
 └── app/
-    ├── argocd-app.yaml        # Applied once by RHDH bootstrap (oc)
-    └── pipelinerun.yaml       # Manual / reference PipelineRun
+    ├── argocd-app.yaml        # Reference Application CR (created by argocd:create-resources)
+    └── pipelinerun.yaml       # First / ad-hoc build (`oc create -f`; uses generateName)
 ```
 
 ## Argo CD (OpenShift GitOps)
