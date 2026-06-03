@@ -101,7 +101,7 @@ spec:
     - name: URL
       value: $(params.GIT_K8_REPO)
     - name: REVISION
-      value: $(params.GIT_REVISION)
+      value: main
     - name: SUBDIRECTORY
       value: ""
     - name: DELETE_EXISTING
