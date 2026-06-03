@@ -35,22 +35,16 @@ Deployment and CI use **OpenShift GitOps (Argo CD)** and **Tekton** only.
 
 OpenShift GitOps is configured with **resource exclusions** for `tekton.dev/PipelineRun` and `TaskRun`. Argo CD still syncs the Tekton **Pipeline**, **EventListener**, and other gitops resources; CI runs are not continuously reconciled by Argo CD (expected). The template uses a **PostSync** hook for the first `PipelineRun`; later runs come from the GitHub webhook → EventListener.
 
-### RHDH `app-config` (Argo CD plugin)
+### RHDH Argo CD instance name (template form)
 
-Point the scaffolder and UI at the same instance (name must match template default **`openshift-gitops`**):
+| Concept | On your cluster |
+|---------|-----------------|
+| OpenShift GitOps **ArgoCD CR** + namespace | `openshift-gitops` |
+| Template field **RHDH Argo CD instance name** | Must match an `instances[].name` already configured on your Developer Hub (Roadie `argocd:create-resources` lookup). **Not** the OpenShift GitOps CR name. |
 
-```yaml
-argocd:
-  username: ${ARGOCD_USERNAME}
-  password: ${ARGOCD_PASSWORD}
-  appLocatorMethods:
-    - type: config
-      instances:
-        - name: openshift-gitops
-          url: https://openshift-gitops-server-openshift-gitops.apps.<cluster>.<domain>
-```
+Use the exact instance name from your hub’s existing Argo CD plugin configuration. The template sets `argocd/instance-name` on the catalog component to the same value.
 
-Use your cluster route host from `oc get argocd openshift-gitops -n openshift-gitops -o jsonpath='{.status.host}'`.
+Application CRs are created on the cluster in namespace **`openshift-gitops`** regardless of that RHDH instance label.
 
 ## Required scaffolder actions
 
@@ -62,7 +56,7 @@ The template must find these actions under **Create → Actions** in Developer H
 | `argocd:create-resources` | Register Argo CD Application for the k8 repo |
 | `catalog:register` | Register the component |
 
-If `argocd:create-resources` is missing, enable the **Argo CD** dynamic plugin / scaffolder module on RHDH and configure `argocd` in `app-config` (see [RH Argo CD plugin docs](https://docs.redhat.com/en/documentation/red_hat_plug-ins_for_backstage/2.0/html/argocd_plugin_for_backstage/argocd-plugin-for-backstage)). The template **Argo CD instance** is **`openshift-gitops`**, matching the ArgoCD CR in namespace **`openshift-gitops`**.
+If `argocd:create-resources` is missing, enable the Argo CD scaffolder module on Developer Hub (see [RH Argo CD plugin docs](https://docs.redhat.com/en/documentation/red_hat_plug-ins_for_backstage/2.0/html/argocd_plugin_for_backstage/argocd-plugin-for-backstage)). This repo does not ship RHDH configuration files.
 
 ### Alternative: cluster ApplicationSet (no `argocd:create-resources`)
 
@@ -98,7 +92,7 @@ oc get route "el-<app>-listener" -n "$NAMESPACE" -o jsonpath='https://{.spec.hos
 | GitHub org | `rhdh-developers` |
 | Owner | `group:default/rhdh-developers` |
 | Namespace | `my-rest-api` |
-| Argo CD instance | `openshift-gitops` |
+| RHDH Argo CD instance name | `default` on this hub (`instances[].name` in Argo CD plugin config) |
 
 ## Optional: `run:command` bootstrap script
 

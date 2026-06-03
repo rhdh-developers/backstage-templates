@@ -61,14 +61,13 @@ spec:
             sync target. Usually matches the application name.
           pattern: '^[a-z][a-z0-9-]{1,28}[a-z0-9]$'
         argoInstance:
-          title: Argo CD instance (RHDH)
+          title: RHDH Argo CD instance name
           type: string
-          default: openshift-gitops
+          default: default
           description: >
-            Must match the Argo CD instance name in RHDH app-config and the OpenShift
-            GitOps ArgoCD CR (metadata.name: openshift-gitops, namespace: openshift-gitops).
-            Application CRs are created in the openshift-gitops namespace.
-          ui:readonly: true
+            Must match argocd.appLocatorMethods.instances[].name on Developer Hub
+            (argocd:create-resources). Not the OpenShift GitOps CR name.
+          ui:help: Case-sensitive. This hub uses the instance name `default`.
 
   steps:
     # -------------------------------------------------------------------------
@@ -85,6 +84,7 @@ spec:
           githubOrg: ${{ parameters.githubOrg }}
           owner: ${{ parameters.owner }}
           namespace: ${{ parameters.namespace }}
+          argoInstance: ${{ parameters.argoInstance }}
 
     # -------------------------------------------------------------------------
     # 2. Render k8s/gitops skeleton into ./k8 workspace directory
@@ -169,9 +169,9 @@ spec:
     text:
       - title: What happens next
         content: |
-          **OpenShift GitOps** (Argo CD CR `openshift-gitops` in namespace `openshift-gitops`)
-          is syncing `k8/gitops` into app namespace `${{ parameters.namespace }}`.
-          The Application CR name is `${{ parameters.appName }}` in `openshift-gitops`.
+          **Argo CD** (RHDH instance `${{ parameters.argoInstance }}`) registered Application
+          `${{ parameters.appName }}` in namespace `openshift-gitops`, syncing `k8/gitops`
+          into `${{ parameters.namespace }}`.
 
           Tekton **Pipeline**, triggers, and deployment are managed by Argo CD.
           **PipelineRun** / **TaskRun** objects are excluded from Argo CD reconciliation

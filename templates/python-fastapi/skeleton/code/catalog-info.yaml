@@ -4,9 +4,9 @@ metadata:
   name: ${{ values.appName }}
   description: Python FastAPI REST API service – ${{ values.appName }}
   annotations:
-    # Argo CD (OpenShift GitOps) – Application CR lives in openshift-gitops namespace
+    # Argo CD – app-name is the Application CR; instance-name matches the template form
     argocd/app-name: ${{ values.appName }}
-    argocd/instance-name: openshift-gitops
+    argocd/instance-name: ${{ values.argoInstance }}
     # Kubernetes integration (shows Pods/Deployments tab)
     backstage.io/kubernetes-id: ${{ values.appName }}
     backstage.io/kubernetes-namespace: ${{ values.namespace }}
