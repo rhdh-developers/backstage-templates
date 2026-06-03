@@ -27,7 +27,6 @@ spec:
         - owner
         - namespace
         - argoInstance
-        - clusterRef
       properties:
         appName:
           title: Application Name
@@ -69,18 +68,6 @@ spec:
             Must match argocd.appLocatorMethods.instances[].name on Developer Hub
             (argocd:create-resources). Not the OpenShift GitOps CR name.
           ui:help: Case-sensitive. This hub uses the instance name `default`.
-        clusterRef:
-          title: Kubernetes cluster (catalog)
-          type: string
-          default: resource:default/local-cluster
-          description: >
-            Catalog Resource entity for the OpenShift cluster (kubernetes:create-namespace).
-            Must match your Developer Hub Kubernetes cluster configuration.
-          ui:field: EntityPicker
-          ui:options:
-            catalogFilter:
-              kind: Resource
-              spec.type: kubernetes-cluster
 
   steps:
     # -------------------------------------------------------------------------
@@ -143,22 +130,9 @@ spec:
         repoVisibility: public
 
     # -------------------------------------------------------------------------
-    # 5. Create OpenShift namespace (project) before Argo CD sync.
-    #    Requires kubernetes:create-namespace on Developer Hub.
-    # -------------------------------------------------------------------------
-    - id: create-openshift-namespace
-      name: Create OpenShift Namespace
-      action: kubernetes:create-namespace
-      input:
-        namespace: ${{ parameters.namespace }}
-        clusterRef: ${{ parameters.clusterRef }}
-        skipTLSVerify: true
-        labels: argocd.argoproj.io/managed-by=openshift-gitops
-
-    # -------------------------------------------------------------------------
-    # 6. Create Argo CD Application in namespace openshift-gitops. Syncs k8/gitops
-    #    into the app namespace (Namespace excluded from git — see k8/app/argocd-app.yaml).
-    #    Requires argocd:create-resources.
+    # 5. Create Argo CD Application in namespace openshift-gitops. Syncs k8/gitops
+    #    (including Namespace). Application ignoreDifferences skips Namespace drift
+    #    after the initial sync (see k8/app/argocd-app.yaml). Requires argocd:create-resources.
     # -------------------------------------------------------------------------
     - id: create-argocd-app
       name: Create Argo CD Application
@@ -172,7 +146,7 @@ spec:
         labelValue: ${{ parameters.appName }}
 
     # -------------------------------------------------------------------------
-    # 7. Register the catalog component from the code repo's catalog-info.yaml
+    # 6. Register the catalog component from the code repo's catalog-info.yaml
     # -------------------------------------------------------------------------
     - id: register-catalog
       name: Register in Backstage Catalog
@@ -195,12 +169,9 @@ spec:
     text:
       - title: What happens next
         content: |
-          **OpenShift namespace** `${{ parameters.namespace }}` was created with label
-          `argocd.argoproj.io/managed-by=openshift-gitops`.
-
           **Argo CD** (RHDH instance `${{ parameters.argoInstance }}`) registered Application
           `${{ parameters.appName }}` in namespace `openshift-gitops`, syncing `k8/gitops`
-          into `${{ parameters.namespace }}` (Namespace is not synced from git).
+          into `${{ parameters.namespace }}` (Namespace created on first sync from git).
 
           Apply ignore rules on the live Application CR (if not already present):
           `oc apply -f https://raw.githubusercontent.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-k8/main/k8/app/argocd-app.yaml -n openshift-gitops`
