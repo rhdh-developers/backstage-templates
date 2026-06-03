@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# OPTIONAL – not used by template.yaml unless you add a run:command step and enable
+# that scaffolder module on RHDH. Default bootstrap uses argocd:create-resources instead.
+#
 # Bootstrap OpenShift after the k8 repo is published.
 # Runs in the RHDH scaffolder pod; requires oc and cluster credentials:
 #   TOKEN, SERVER  – OpenShift API (set in the RHDH pod)

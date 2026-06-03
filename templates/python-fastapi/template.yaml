@@ -26,6 +26,7 @@ spec:
         - githubOrg
         - owner
         - namespace
+        - argoInstance
       properties:
         appName:
           title: Application Name
@@ -59,6 +60,15 @@ spec:
             OpenShift namespace for the deployment, Tekton pipeline, and ArgoCD
             sync target. Usually matches the application name.
           pattern: '^[a-z][a-z0-9-]{1,28}[a-z0-9]$'
+        argoInstance:
+          title: Argo CD instance (RHDH)
+          type: string
+          default: openshift-gitops
+          description: >
+            Must match the Argo CD instance name in RHDH app-config and the OpenShift
+            GitOps ArgoCD CR (metadata.name: openshift-gitops, namespace: openshift-gitops).
+            Application CRs are created in the openshift-gitops namespace.
+          ui:readonly: true
 
   steps:
     # -------------------------------------------------------------------------
@@ -120,28 +130,20 @@ spec:
         repoVisibility: public
 
     # -------------------------------------------------------------------------
-    # 5. Bootstrap OpenShift using oc in the RHDH pod (TOKEN, SERVER, GITHUB_PAT).
-    #    Registers the ArgoCD Application; ArgoCD syncs gitops; Tekton PostSync
-    #    hook runs the initial PipelineRun. No GitHub Actions.
+    # 5. Create Argo CD Application in namespace openshift-gitops (OpenShift GitOps
+    #    operator). Syncs k8/gitops into the app namespace. Initial PipelineRun via
+    #    PostSync hook. Requires argocd:create-resources (see README).
     # -------------------------------------------------------------------------
-    - id: fetch-bootstrap-script
-      name: Fetch Bootstrap Script
-      action: fetch:plain
+    - id: create-argocd-app
+      name: Create Argo CD Application
+      action: argocd:create-resources
       input:
-        url: ./scripts
-        targetPath: ./scripts
-
-    - id: bootstrap-openshift
-      name: Bootstrap OpenShift (ArgoCD and Tekton)
-      action: run:command
-      input:
-        command: bash
-        args:
-          - ./scripts/bootstrap-openshift.sh
-        env:
-          APP_NAME: ${{ parameters.appName }}
-          NAMESPACE: ${{ parameters.namespace }}
-          GITHUB_ORG: ${{ parameters.githubOrg }}
+        appName: ${{ parameters.appName }}
+        argoInstance: ${{ parameters.argoInstance }}
+        namespace: ${{ parameters.namespace }}
+        repoUrl: ${{ steps['publish-k8'].output.remoteUrl }}
+        path: k8/gitops
+        labelValue: ${{ parameters.appName }}
 
     # -------------------------------------------------------------------------
     # 6. Register the catalog component from the code repo's catalog-info.yaml
@@ -167,14 +169,29 @@ spec:
     text:
       - title: What happens next
         content: |
-          OpenShift bootstrap has run from Developer Hub using **ArgoCD** and **Tekton** only:
-          1. Namespace `${{ parameters.namespace }}` (labeled for OpenShift GitOps)
-          2. ArgoCD Application syncing `k8/gitops` from the k8 repo
-          3. Tekton Pipeline, triggers, and EventListener route (via ArgoCD)
-          4. Initial **PipelineRun** (ArgoCD PostSync hook)
-          5. GitHub push webhook on `${{ parameters.appName }}-code` (if `GITHUB_PAT` is set in the pod)
+          **OpenShift GitOps** (Argo CD CR `openshift-gitops` in namespace `openshift-gitops`)
+          is syncing `k8/gitops` into app namespace `${{ parameters.namespace }}`.
+          The Application CR name is `${{ parameters.appName }}` in `openshift-gitops`.
 
-          Monitor the ArgoCD app in the OpenShift GitOps UI or:
+          Tekton **Pipeline**, triggers, and deployment are managed by Argo CD.
+          **PipelineRun** / **TaskRun** objects are excluded from Argo CD reconciliation
+          (cluster default); CI runs still appear in the Tekton plugin and `oc`.
+
+          Before CI can push image digests to the k8 repo, create secrets once (cluster admin):
+          ```
+          oc create secret generic github-token \
+            --from-literal=token="$GITHUB_PAT" -n ${{ parameters.namespace }}
+          WEBHOOK_SECRET=$(openssl rand -hex 20)
+          oc create secret generic github-webhook-secret \
+            --from-literal=secret="$WEBHOOK_SECRET" -n ${{ parameters.namespace }}
+          ```
+          Then add a GitHub **push** webhook on `${{ parameters.appName }}-code` pointing to:
+          `oc get route el-${{ parameters.appName }}-listener -n ${{ parameters.namespace }} -o jsonpath='https://{.spec.host}'`
+          using `$WEBHOOK_SECRET` as the webhook secret.
+
+          Monitor Argo CD:
           `oc get application ${{ parameters.appName }} -n openshift-gitops`
+          UI: OpenShift console → OpenShift GitOps, or your Argo CD route
+          (`openshift-gitops-server-openshift-gitops` in namespace `openshift-gitops`).
 
-          Open the catalog component for Kubernetes, ArgoCD, Tekton, and repo links.
+          Open the catalog component for Kubernetes, Argo CD, and Tekton tabs.

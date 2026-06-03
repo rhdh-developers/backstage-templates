@@ -1,4 +1,6 @@
-# Initial build – executed once by ArgoCD after the gitops Application syncs.
+# Initial build – Argo CD PostSync hook after the Application in openshift-gitops syncs.
+# PipelineRun/TaskRun are resource-excluded on OpenShift GitOps (not continuously
+# reconciled); the hook still creates this run once per successful sync wave.
 apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:

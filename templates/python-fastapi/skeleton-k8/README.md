@@ -23,10 +23,18 @@ k8/
     └── pipelinerun.yaml       # Manual / reference PipelineRun
 ```
 
-## ArgoCD
+## Argo CD (OpenShift GitOps)
 
-The RHDH template applies `k8/app/argocd-app.yaml` into `openshift-gitops`.
-ArgoCD syncs `k8/gitops/` into namespace `${{ values.namespace }}`.
+| | |
+|--|--|
+| Control plane | ArgoCD CR **`openshift-gitops`** in namespace **`openshift-gitops`** |
+| Application CR | `Application/${{ values.appName }}` in **`openshift-gitops`** (created by `argocd:create-resources`) |
+| Git source | This repo, path `k8/gitops`, branch `main` |
+| Destination | Namespace **`${{ values.namespace }}`** on the cluster |
+
+Reference manifest: `k8/app/argocd-app.yaml`.
+
+OpenShift GitOps excludes `PipelineRun` / `TaskRun` from Argo CD reconciliation; the **Pipeline** and **EventListener** in `k8/gitops/` are still synced. Push-triggered runs are created by Tekton, not Argo CD.
 
 ## Tekton CI
 

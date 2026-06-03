@@ -1,5 +1,12 @@
-# ArgoCD Application – applied by the RHDH template bootstrap (oc) into
-# openshift-gitops. ArgoCD then syncs k8/gitops (Tekton, routes, deployment).
+# Argo CD Application for OpenShift GitOps.
+#
+# - Argo CD operator CR: argoproj.io/v1beta1 ArgoCD named "openshift-gitops"
+#   in namespace "openshift-gitops" (NOT the app workload namespace).
+# - This Application CR is created in openshift-gitops by argocd:create-resources.
+# - Destination namespace (${{ values.namespace }}) receives synced k8/gitops manifests.
+#
+# OpenShift GitOps excludes tekton.dev/TaskRun and PipelineRun from reconciliation;
+# the Pipeline, triggers, and PostSync hook PipelineRun still deploy from gitops.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
