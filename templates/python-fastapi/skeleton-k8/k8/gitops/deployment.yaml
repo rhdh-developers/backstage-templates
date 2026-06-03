@@ -3,6 +3,9 @@ kind: Deployment
 metadata:
   name: ${{ values.appName }}
   namespace: ${{ values.namespace }}
+  annotations:
+    # After Tekton (wave 0). Avoids blocking Pipeline/EventListener while Deployment is ImagePullBackOff.
+    argocd.argoproj.io/sync-wave: "1"
   labels:
     app: ${{ values.appName }}
     app.kubernetes.io/component: ${{ values.appName }}

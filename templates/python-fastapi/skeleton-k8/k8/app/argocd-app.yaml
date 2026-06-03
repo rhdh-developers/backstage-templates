@@ -31,6 +31,16 @@ spec:
       name: ${{ values.namespace }}
       jqPathExpressions:
         - .
+    # Tekton operator / triggers controller mutate these after apply.
+    - group: tekton.dev
+      kind: Pipeline
+      jsonPointers:
+        - /status
+    - group: triggers.tekton.dev
+      kind: EventListener
+      jsonPointers:
+        - /status
+        - /spec/triggers
   syncPolicy:
     automated:
       prune: true

@@ -106,6 +106,25 @@ oc get route "el-<app>-listener" -n "$NAMESPACE" -o jsonpath='https://{.spec.hos
 | OpenShift namespace | `my-rest-api` (shared deployment target; must already exist) |
 | RHDH Argo CD instance name | `default` on this hub (`instances[].name` in Argo CD plugin config) |
 
+## Troubleshooting: Pipeline / EventListener missing in Argo CD
+
+If **TriggerBinding** and **TriggerTemplate** are synced but **Pipeline** and **EventListener** never appear in the cluster, Argo CD is usually stuck on **sync waves**: an unhealthy **Deployment** (e.g. `ImagePullBackOff` before the first build) in wave 0 blocks later waves.
+
+This template keeps Tekton at **wave 0** and the app **Deployment/Service/Route** at **wave 1**. For an existing k8 repo, merge the wave changes from this template repo, push to `main`, then sync (or re-apply `k8/app/argocd-app.yaml` for `ignoreDifferences`).
+
+Verify on the cluster:
+
+```bash
+oc get pipeline,eventlistener -n <namespace>
+oc get application <appName> -n openshift-gitops -o jsonpath='{.status.sync.status}{"\n"}'
+```
+
+One-off apply if you need CI before git sync catches up:
+
+```bash
+oc apply -f k8/gitops/pipeline.yaml -f k8/gitops/eventlistener.yaml -n <namespace>
+```
+
 ## Optional: `run:command` bootstrap script
 
 [`templates/python-fastapi/scripts/bootstrap-openshift.sh`](templates/python-fastapi/scripts/bootstrap-openshift.sh) can automate secrets and webhooks via `oc` in the RHDH pod if you install the scaffolder **run:command** module. It is not used by the template by default.

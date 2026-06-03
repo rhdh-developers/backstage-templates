@@ -4,6 +4,9 @@ kind: Kustomization
 # Synced by the Argo CD Application in namespace openshift-gitops (path: k8/gitops).
 # The app namespace must already exist (not managed from git). OpenShift GitOps does
 # not reconcile tekton.dev/PipelineRun or TaskRun.
+#
+# Sync waves: Tekton + triggers at wave 0; Deployment/Service/Route at wave 1 so a
+# pre-build ImagePullBackOff does not block Pipeline/EventListener creation.
 
 resources:
   - pipeline.yaml

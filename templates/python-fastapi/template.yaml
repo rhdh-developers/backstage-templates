@@ -186,9 +186,9 @@ spec:
           Apply ignore rules on the live Application CR (if not already present):
           `oc apply -f https://raw.githubusercontent.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-k8/main/k8/app/argocd-app.yaml -n openshift-gitops`
 
-          Tekton **Pipeline**, triggers, and deployment are managed by Argo CD.
-          **PipelineRun** / **TaskRun** objects are excluded from Argo CD reconciliation
-          (cluster default); CI runs still appear in the Tekton plugin and `oc`.
+          Tekton **Pipeline**, triggers, and deployment are managed by Argo CD (Tekton at
+          sync wave 0, app Deployment at wave 1 so ImagePullBackOff does not block CI).
+          **PipelineRun** / **TaskRun** are excluded from reconciliation (cluster default).
 
           Before CI can push image digests to the k8 repo, create secrets once (cluster admin):
           ```

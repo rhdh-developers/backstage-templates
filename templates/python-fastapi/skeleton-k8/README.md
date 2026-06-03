@@ -37,7 +37,7 @@ Reference manifest: `k8/app/argocd-app.yaml` includes `ignoreDifferences` for th
 oc apply -f k8/app/argocd-app.yaml -n openshift-gitops
 ```
 
-OpenShift GitOps excludes `PipelineRun` / `TaskRun` from Argo CD reconciliation; the **Pipeline** and **EventListener** in `k8/gitops/` are still synced. Push-triggered runs are created by Tekton, not Argo CD.
+OpenShift GitOps excludes `PipelineRun` / `TaskRun` from Argo CD reconciliation; the **Pipeline** and **EventListener** in `k8/gitops/` are still synced (wave 0, before the app Deployment at wave 1). Push-triggered runs are created by Tekton, not Argo CD.
 
 ## Tekton CI
 

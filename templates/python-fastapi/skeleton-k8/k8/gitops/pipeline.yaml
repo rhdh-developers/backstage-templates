@@ -3,8 +3,6 @@ kind: Pipeline
 metadata:
   name: ${{ values.appName }}
   namespace: ${{ values.namespace }}
-  annotations:
-    argocd.argoproj.io/sync-wave: "5"
   labels:
     app.kubernetes.io/instance: ${{ values.appName }}
     app.kubernetes.io/name: ${{ values.appName }}
