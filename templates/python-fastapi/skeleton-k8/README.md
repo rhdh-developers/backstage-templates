@@ -7,20 +7,21 @@ managed by **ArgoCD** and **Tekton** on OpenShift. This repo does not use GitHub
 
 ```
 k8/
-├── gitops/                    # Synced by ArgoCD (path in the Application spec)
-│   ├── namespace.yaml         # Reference only (namespace created before template run)
+├── gitops/                    # Synced by Argo CD (Application path: k8/gitops)
 │   ├── pipeline.yaml          # Tekton Pipeline
 │   ├── triggerbinding.yaml
 │   ├── triggertemplate.yaml
 │   ├── eventlistener.yaml
 │   ├── eventlistener-route.yaml
-│   ├── deployment.yaml
+│   ├── deployment.yaml        # sync wave 1 (after Tekton)
 │   ├── service.yaml
 │   └── route.yaml
-└── app/
-    ├── argocd-app.yaml        # Application CR with Namespace ignoreDifferences (apply after template)
-    └── pipelinerun.yaml       # First / ad-hoc build (`oc create -f`; uses generateName)
+└── app/                       # Not synced by Argo CD — apply manually
+    ├── argocd-app.yaml        # ignoreDifferences for Namespace (merge after template)
+    └── pipelinerun.yaml       # First build (`oc create -f`; generateName)
 ```
+
+The OpenShift namespace must exist before the template run (`oc create namespace` + label). It is not defined in git.
 
 ## Argo CD (OpenShift GitOps)
 

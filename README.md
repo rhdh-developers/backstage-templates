@@ -70,10 +70,6 @@ The template must find these actions under **Create → Actions** in Developer H
 
 If `argocd:create-resources` is missing, enable the Argo CD scaffolder module on Developer Hub (see [RH Argo CD plugin docs](https://docs.redhat.com/en/documentation/red_hat_plug-ins_for_backstage/2.0/html/argocd_plugin_for_backstage/argocd-plugin-for-backstage)). This repo does not ship RHDH configuration files.
 
-### Alternative: cluster ApplicationSet (no `argocd:create-resources`)
-
-If you cannot enable the Argo CD scaffolder action, install [`cluster/applicationset-python-fastapi.yaml`](cluster/applicationset-python-fastapi.yaml) once on the cluster and remove the `create-argocd-app` step from `template.yaml`. Argo CD will discover new `*-k8` repos automatically.
-
 ## One-time secrets and webhook (per app)
 
 Tekton needs a `github-token` secret (push to the k8 repo) and `github-webhook-secret` (EventListener). These are **not** stored in Git. After the template run, a cluster admin runs:
@@ -106,6 +102,12 @@ oc get route "el-<app>-listener" -n "$NAMESPACE" -o jsonpath='https://{.spec.hos
 | OpenShift namespace | `my-rest-api` (shared deployment target; must already exist) |
 | RHDH Argo CD instance name | `default` on this hub (`instances[].name` in Argo CD plugin config) |
 
+## GitHub: protected `main` branch (GH006)
+
+If `git push origin main` fails with **Changes must be made through a pull request**, the org has branch protection on `main`. Use a feature branch and merge via PR; the merge still triggers Tekton (push event on `main`).
+
+The pipeline’s `commit-and-push` task pushes to **`*-k8`** `main`. The `github-token` secret must use an identity allowed to update protected `main` on that repo (bypass list or relaxed rules), or pipeline commits will fail with the same error.
+
 ## Troubleshooting: Pipeline / EventListener missing in Argo CD
 
 If **TriggerBinding** and **TriggerTemplate** are synced but **Pipeline** and **EventListener** never appear in the cluster, Argo CD is usually stuck on **sync waves**: an unhealthy **Deployment** (e.g. `ImagePullBackOff` before the first build) in wave 0 blocks later waves.
@@ -125,10 +127,12 @@ One-off apply if you need CI before git sync catches up:
 oc apply -f k8/gitops/pipeline.yaml -f k8/gitops/eventlistener.yaml -n <namespace>
 ```
 
-## Optional: `run:command` bootstrap script
+## Repository layout
 
-[`templates/python-fastapi/scripts/bootstrap-openshift.sh`](templates/python-fastapi/scripts/bootstrap-openshift.sh) can automate secrets and webhooks via `oc` in the RHDH pod if you install the scaffolder **run:command** module. It is not used by the template by default.
-
-## Sample reference
-
-[`sample-app/rest-api`](sample-app/rest-api) is the reference the skeletons were derived from.
+| Path | Purpose |
+|------|---------|
+| [`catalog-info.yaml`](catalog-info.yaml) | Backstage Location → registers the template |
+| [`templates/python-fastapi/template.yaml`](templates/python-fastapi/template.yaml) | Scaffolder template |
+| [`templates/python-fastapi/skeleton/code/`](templates/python-fastapi/skeleton/code/) | Published as `<app>-code` |
+| [`templates/python-fastapi/skeleton-k8/k8/gitops/`](templates/python-fastapi/skeleton-k8/k8/gitops/) | Argo CD sync path in `<app>-k8` |
+| [`templates/python-fastapi/skeleton-k8/k8/app/`](templates/python-fastapi/skeleton-k8/k8/app/) | Manual `argocd-app.yaml` and `pipelinerun.yaml` only |

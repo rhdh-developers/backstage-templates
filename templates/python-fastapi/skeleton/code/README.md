@@ -31,6 +31,8 @@ The Dev Spaces host is the route exposed by the OpenShift Dev Spaces operator in
 
 ## CI/CD
 
+If your GitHub org protects `main`, use a branch and pull request; merging into `main` still triggers the push webhook.
+
 Pushes to `main` trigger a Tekton pipeline that:
 
 1. Clones this repo and builds a container image with Buildah.
