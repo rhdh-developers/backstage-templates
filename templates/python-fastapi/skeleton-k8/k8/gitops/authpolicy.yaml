@@ -19,3 +19,13 @@ spec:
         credentials:
           authorizationHeader:
             prefix: APIKEY
+        when:
+          - selector: request.url_path
+            operator: matches
+            value: "^/api/v1/.*"
+      "public-paths":
+        anonymous: {}
+        when:
+          - selector: request.url_path
+            operator: matches
+            value: "^/health$|^/openapi\\.json$|^/docs.*"
