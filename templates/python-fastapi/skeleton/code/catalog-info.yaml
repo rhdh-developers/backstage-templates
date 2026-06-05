@@ -30,3 +30,17 @@ spec:
   type: service
   lifecycle: experimental
   owner: ${{ values.owner }}
+  providesApis:
+    - ${{ values.appName }}-api
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: ${{ values.appName }}-api
+  description: OpenAPI spec for the ${{ values.appName }} FastAPI service
+spec:
+  type: openapi
+  lifecycle: experimental
+  owner: ${{ values.owner }}
+  definition:
+    $text: https://${{ values.appName }}.${{ values.gateway }}/openapi.json

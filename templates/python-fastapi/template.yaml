@@ -102,6 +102,7 @@ spec:
           owner: ${{ parameters.owner }}
           namespace: ${{ parameters.namespace }}
           argoInstance: ${{ parameters.argoInstance }}
+          gateway: ${{ parameters.gateway }}
 
     # -------------------------------------------------------------------------
     # 2. Render k8s/gitops skeleton into ./k8 workspace directory
