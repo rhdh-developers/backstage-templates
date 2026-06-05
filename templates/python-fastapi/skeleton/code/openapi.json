@@ -1,0 +1,26 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "${{ values.appName }}",
+    "description": "Python FastAPI service – ${{ values.appName }}",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/": {
+      "get": {
+        "summary": "Root",
+        "operationId": "root_api_v1__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

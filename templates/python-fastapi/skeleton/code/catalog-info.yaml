@@ -43,4 +43,4 @@ spec:
   lifecycle: experimental
   owner: ${{ values.owner }}
   definition:
-    $text: https://${{ values.appName }}.${{ values.gateway }}/openapi.json
+    $text: https://raw.githubusercontent.com/${{ values.githubOrg }}/${{ values.appName }}-code/main/openapi.json
