@@ -42,5 +42,30 @@ spec:
   type: openapi
   lifecycle: experimental
   owner: ${{ values.owner }}
-  definition:
-    $text: https://raw.githubusercontent.com/${{ values.githubOrg }}/${{ values.appName }}-code/main/openapi.json
+  definition: |
+    openapi: 3.1.0
+    info:
+      title: ${{ values.appName }}
+      description: FastAPI REST API service scaffolded by RHDH
+      version: 0.1.0
+    paths:
+      /api/v1/hello:
+        get:
+          summary: Hello
+          operationId: hello_api_v1_hello_get
+          responses:
+            "200":
+              description: Successful Response
+              content:
+                application/json:
+                  schema: {}
+      /health:
+        get:
+          summary: Health
+          operationId: health_health_get
+          responses:
+            "200":
+              description: Successful Response
+              content:
+                application/json:
+                  schema: {}
