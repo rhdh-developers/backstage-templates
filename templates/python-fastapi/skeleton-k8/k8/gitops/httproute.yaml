@@ -5,6 +5,8 @@ metadata:
     app: ${{ values.appName }}
   namespace: ${{ values.namespace }}
   name: ${{ values.appName }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   hostnames:
     - ${{ values.appName }}.${{ values.gateway }}
