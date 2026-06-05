@@ -20,4 +20,4 @@ resources:
   - httproute.yaml
   # - authpolicy.yaml
   # - planpolicy.yaml
-  # Initial PipelineRun: use k8/app/pipelinerun.yaml (generateName is invalid in Kustomize)
+  - initial-pipelinerun-hook.yaml
