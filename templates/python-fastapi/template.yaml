@@ -189,10 +189,10 @@ spec:
       - title: What happens next
         content: |
           **Application name:** `${{ parameters.appName }}` (repos, Argo CD Application, K8s names)  
-          **OpenShift namespace:** `${{ parameters.namespace }}` (deployment target—all components)
-          **URL:** `https://${{ parameters.appName }}.${{ parameters.gateway }}/api/v1/` after deployment
-          **Docs:** `https://${{ parameters.appName }}.${{ parameters.gateway }}/docs` after deployment
-
+          **OpenShift namespace:** `${{ parameters.namespace }}` (deployment target—all components)  
+          **URL:** `https://${{ parameters.appName }}.${{ parameters.gateway }}/api/v1/` after deployment  
+          **Docs:** `https://${{ parameters.appName }}.${{ parameters.gateway }}/docs` after deployment  
+  
           Namespace must already exist. Application name and namespace are independent
           (e.g. app `my-rest-api-125` in namespace `my-rest-api`).
 
