@@ -1,4 +1,4 @@
-# ConfigMap holds the initial PipelineRun manifest so the hook Job can apply it
+# ConfigMap holds the initial PipelineRun manifest so the trigger Job can apply it
 # without heredoc indentation issues.
 apiVersion: v1
 kind: ConfigMap
@@ -63,20 +63,19 @@ data:
               requests:
                 storage: 1Gi
 ---
-# PostSync hook Job – creates the initial PipelineRun once ArgoCD has synced the Pipeline.
-# Idempotency guard: if <appName>-initial-build already exists the Job exits 0 immediately.
-# The Job is deleted automatically after success (HookSucceeded delete policy).
+# Regular synced Job (not a hook) – ArgoCD creates it once at wave 1 (after the Pipeline
+# exists at wave 0) and never touches it again (CreateOnly=true, Prune=false).
+# The idempotency guard means re-creating the Job manually triggers a new build safely.
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: ${{ values.appName }}-initial-build-hook
+  name: ${{ values.appName }}-initial-build-trigger
   namespace: ${{ values.namespace }}
   annotations:
-    argocd.argoproj.io/hook: PostSync
-    argocd.argoproj.io/hook-delete-policy: HookSucceeded
-    argocd.argoproj.io/sync-wave: "2"
+    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-options: CreateOnly=true,Prune=false
 spec:
-  ttlSecondsAfterFinished: 120
+  ttlSecondsAfterFinished: 600
   template:
     spec:
       restartPolicy: OnFailure
