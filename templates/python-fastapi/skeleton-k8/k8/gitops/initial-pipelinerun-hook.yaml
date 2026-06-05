@@ -1,7 +1,71 @@
-# PostSync hook Job – triggers the first PipelineRun once ArgoCD has synced the Pipeline.
-# ArgoCD creates this Job after every sync. The idempotency guard (oc get pipelinerun ...)
-# means only the very first run actually creates a PipelineRun; subsequent syncs exit 0.
-# The Job is deleted automatically after it succeeds (HookSucceeded delete policy).
+# ConfigMap holds the initial PipelineRun manifest so the hook Job can apply it
+# without heredoc indentation issues.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ${{ values.appName }}-initial-build-manifest
+  namespace: ${{ values.namespace }}
+data:
+  pipelinerun.yaml: |
+    apiVersion: tekton.dev/v1
+    kind: PipelineRun
+    metadata:
+      name: ${{ values.appName }}-initial-build
+      namespace: ${{ values.namespace }}
+      labels:
+        app.kubernetes.io/instance: ${{ values.appName }}
+        app.kubernetes.io/name: ${{ values.appName }}
+        backstage.io/kubernetes-id: ${{ values.appName }}
+        pipeline.openshift.io/strategy: docker
+        pipeline.openshift.io/type: kubernetes
+        tekton.dev/pipeline: ${{ values.appName }}
+    spec:
+      pipelineRef:
+        name: ${{ values.appName }}
+      params:
+      - name: APP_NAME
+        value: ${{ values.appName }}
+      - name: GIT_REPO
+        value: https://github.com/${{ values.githubOrg }}/${{ values.appName }}-code.git
+      - name: GIT_K8_REPO
+        value: https://github.com/${{ values.githubOrg }}/${{ values.appName }}-k8.git
+      - name: GIT_REVISION
+        value: main
+      - name: IMAGE_NAME
+        value: image-registry.openshift-image-registry.svc:5000/${{ values.namespace }}/${{ values.appName }}
+      - name: PATH_CONTEXT
+        value: .
+      taskRunTemplate:
+        serviceAccountName: pipeline
+      timeouts:
+        pipeline: 1h0m0s
+      workspaces:
+      - name: workspace
+        volumeClaimTemplate:
+          metadata:
+            labels:
+              tekton.dev/pipeline: ${{ values.appName }}
+          spec:
+            accessModes:
+            - ReadWriteOnce
+            resources:
+              requests:
+                storage: 1Gi
+      - name: k8-workspace
+        volumeClaimTemplate:
+          metadata:
+            labels:
+              tekton.dev/pipeline: ${{ values.appName }}
+          spec:
+            accessModes:
+            - ReadWriteOnce
+            resources:
+              requests:
+                storage: 1Gi
+---
+# PostSync hook Job – creates the initial PipelineRun once ArgoCD has synced the Pipeline.
+# Idempotency guard: if <appName>-initial-build already exists the Job exits 0 immediately.
+# The Job is deleted automatically after success (HookSucceeded delete policy).
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -17,75 +81,25 @@ spec:
     spec:
       restartPolicy: OnFailure
       serviceAccountName: pipeline
+      volumes:
+        - name: manifest
+          configMap:
+            name: ${{ values.appName }}-initial-build-manifest
       containers:
         - name: trigger
           image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+          volumeMounts:
+            - name: manifest
+              mountPath: /config
           command:
             - /bin/bash
             - -c
             - |
               set -e
-              # Idempotency guard – skip if the initial build already exists
               if oc get pipelinerun ${{ values.appName }}-initial-build -n ${{ values.namespace }} >/dev/null 2>&1; then
                 echo "PipelineRun ${{ values.appName }}-initial-build already exists, skipping."
                 exit 0
               fi
               echo "Creating initial PipelineRun..."
-              oc create -n ${{ values.namespace }} -f - <<'EOF'
-              apiVersion: tekton.dev/v1
-              kind: PipelineRun
-              metadata:
-                name: ${{ values.appName }}-initial-build
-                namespace: ${{ values.namespace }}
-                labels:
-                  app.kubernetes.io/instance: ${{ values.appName }}
-                  app.kubernetes.io/name: ${{ values.appName }}
-                  backstage.io/kubernetes-id: ${{ values.appName }}
-                  pipeline.openshift.io/strategy: docker
-                  pipeline.openshift.io/type: kubernetes
-                  tekton.dev/pipeline: ${{ values.appName }}
-              spec:
-                pipelineRef:
-                  name: ${{ values.appName }}
-                params:
-                - name: APP_NAME
-                  value: ${{ values.appName }}
-                - name: GIT_REPO
-                  value: https://github.com/${{ values.githubOrg }}/${{ values.appName }}-code.git
-                - name: GIT_K8_REPO
-                  value: https://github.com/${{ values.githubOrg }}/${{ values.appName }}-k8.git
-                - name: GIT_REVISION
-                  value: main
-                - name: IMAGE_NAME
-                  value: image-registry.openshift-image-registry.svc:5000/${{ values.namespace }}/${{ values.appName }}
-                - name: PATH_CONTEXT
-                  value: .
-                taskRunTemplate:
-                  serviceAccountName: pipeline
-                timeouts:
-                  pipeline: 1h0m0s
-                workspaces:
-                - name: workspace
-                  volumeClaimTemplate:
-                    metadata:
-                      labels:
-                        tekton.dev/pipeline: ${{ values.appName }}
-                    spec:
-                      accessModes:
-                      - ReadWriteOnce
-                      resources:
-                        requests:
-                          storage: 1Gi
-                - name: k8-workspace
-                  volumeClaimTemplate:
-                    metadata:
-                      labels:
-                        tekton.dev/pipeline: ${{ values.appName }}
-                    spec:
-                      accessModes:
-                      - ReadWriteOnce
-                      resources:
-                        requests:
-                          storage: 1Gi
-              EOF
-              echo "PipelineRun ${{ values.appName }}-initial-build created."
+              oc create -f /config/pipelinerun.yaml
+              echo "Done."
