@@ -15,7 +15,12 @@ k8/
 │   ├── eventlistener-route.yaml
 │   ├── deployment.yaml        # sync wave 1 (after Tekton)
 │   ├── service.yaml
-│   └── route.yaml
+│   ├── route.yaml
+|   ├── initial-pipelinerun-hook.yaml # Job for initial pipeline run upon creation
+|   ├── kustomization.yaml
+|   ├── httproute.yaml.        # Gateway API integration
+|   ├── planpolicy.yaml        # For RHCL (commented out by default)
+|   └── authpolicy.yaml        # For RHCL (commented out by default)
 └── app/                       # Not synced by Argo CD — apply manually
     ├── argocd-app.yaml        # ignoreDifferences for Namespace (merge after template)
     └── pipelinerun.yaml       # First build (`oc create -f`; generateName)
