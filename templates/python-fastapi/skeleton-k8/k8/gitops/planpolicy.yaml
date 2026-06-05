@@ -1,0 +1,27 @@
+apiVersion: extensions.kuadrant.io/v1alpha1
+kind: PlanPolicy
+metadata:
+  name: ${{ values.appName }}-plans
+  namespace: ${{ values.namespace }}
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: ${{ values.appName }}
+  plans:
+
+    - tier: gold
+      predicate: |
+        has(auth.identity) && auth.identity.metadata.annotations["secret.kuadrant.io/plan-id"] == "gold"
+      limits:
+        daily: 100
+    - tier: silver
+      predicate: |
+        has(auth.identity) && auth.identity.metadata.annotations["secret.kuadrant.io/plan-id"] == "silver"
+      limits:
+        daily: 50
+    - tier: bronze
+      predicate: |
+        has(auth.identity) && auth.identity.metadata.annotations["secret.kuadrant.io/plan-id"] == "bronze"
+      limits:
+        daily: 10

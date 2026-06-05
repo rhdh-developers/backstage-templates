@@ -1,0 +1,21 @@
+apiVersion: kuadrant.io/v1
+kind: AuthPolicy
+metadata:
+  name: ${{ values.appName }}-auth
+  namespace: ${{ values.namespace }}
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: ${{ values.appName }}
+  rules:
+    authentication:
+      "api-key-users":
+        apiKey:
+          selector:
+            matchLabels:
+              app: ${{ values.appName }}
+          allNamespaces: true
+        credentials:
+          authorizationHeader:
+            prefix: APIKEY
