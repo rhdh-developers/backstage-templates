@@ -205,9 +205,7 @@ spec:
           `${{ parameters.appName }}` in `openshift-gitops`, syncing `k8/gitops` into
           **`${{ parameters.namespace }}`**.
 
-          Apply ignore rules on the live Application CR (if not already present):
-          `oc apply -f https://raw.githubusercontent.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-k8/main/k8/app/argocd-app.yaml -n openshift-gitops`
-
+          
           Tekton **Pipeline**, triggers, and deployment are managed by Argo CD (Tekton at
           sync wave 0, app Deployment at wave 1 so ImagePullBackOff does not block CI).
           **PipelineRun** / **TaskRun** are excluded from reconciliation (cluster default).
@@ -223,14 +221,5 @@ spec:
           Then add a GitHub **push** webhook on `${{ parameters.appName }}-code` pointing to:
           `oc get route el-${{ parameters.appName }}-listener -n ${{ parameters.namespace }} -o jsonpath='https://{.spec.host}'`
           using `$WEBHOOK_SECRET` as the webhook secret.
-
-          Start the **first build** after Argo CD syncs the Pipeline:
-          `oc create -f https://raw.githubusercontent.com/${{ parameters.githubOrg }}/${{ parameters.appName }}-k8/main/k8/app/pipelinerun.yaml -n ${{ parameters.namespace }}`
-          (or clone the k8 repo and run `oc create -f k8/app/pipelinerun.yaml -n ${{ parameters.namespace }}`)
-
-          Monitor Argo CD:
-          `oc get application ${{ parameters.appName }} -n openshift-gitops`
-          UI: OpenShift console → OpenShift GitOps, or your Argo CD route
-          (`openshift-gitops-server-openshift-gitops` in namespace `openshift-gitops`).
 
           Open the catalog component for Kubernetes, Argo CD, and Tekton tabs.
