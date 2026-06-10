@@ -1,13 +1,10 @@
-schemaVersion: 2.2.0
+schemaVersion: 2.2.2
 metadata:
   name: ${{ values.appName }}
   displayName: ${{ values.appName }} – Python FastAPI
   description: OpenShift Dev Spaces environment for ${{ values.appName }}
   language: Python
   projectType: FastAPI
-
-attributes:
-  controller.devfile.io/storage-type: per-workspace
 
 projects:
   - name: ${{ values.appName }}-code
@@ -20,24 +17,24 @@ projects:
 components:
   - name: python
     container:
-      image: registry.access.redhat.com/ubi9/python-311:latest
-      env:
-        - name: GITHUB_TOKEN
-          value: "$(GITHUB_TOKEN)"
-      memoryLimit: 512Mi
+      image: registry.redhat.io/devspaces/udi-rhel9:3.28
+      memoryLimit: '2Gi'
+      memoryRequest: '1Gi'
+      cpuLimit: '2'
+      cpuRequest: '1'
       mountSources: true
-      # volumeMounts:
-      #   - name: pip-cache
-      #     path: /home/user/.cache/pip
-
-# volumes:
-#   - name: pip-cache
+      volumeMounts:
+        - name: venv
+          path: /home/user/.venv
+  - name: venv
+    volume:
+      size: 1G
 
 commands:
   - id: install-deps
     exec:
       component: python
-      commandLine: pip install -r requirements.txt
+      commandLine: python -m venv /home/user/.venv && . /home/user/.venv/bin/activate && pip install -r requirements.txt
       workingDir: ${PROJECT_SOURCE}
       label: Install Dependencies
       group:
@@ -47,7 +44,7 @@ commands:
   - id: run-dev
     exec:
       component: python
-      commandLine: uvicorn main:app --reload --host 0.0.0.0 --port 8000
+      commandLine: . /home/user/.venv/bin/activate && uvicorn main:app --reload --host 0.0.0.0 --port 8000
       workingDir: ${PROJECT_SOURCE}
       label: Run Dev Server
       group:
@@ -57,7 +54,7 @@ commands:
   - id: run-tests
     exec:
       component: python
-      commandLine: python -m pytest -v
+      commandLine: . /home/user/.venv/bin/activate && python -m pytest -v
       workingDir: ${PROJECT_SOURCE}
       label: Run Tests
       group:
