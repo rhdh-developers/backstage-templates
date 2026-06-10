@@ -21,7 +21,6 @@ commands:
     exec:
       label: "Run the application"
       component: python
-      wokingDir: ./
       commandLine: python -m venv .venv && . .venv/bin/activate 
       group:
         kind: run
