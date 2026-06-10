@@ -30,8 +30,8 @@ components:
         - name: pip-cache
           path: /home/user/.cache/pip
 
-volumes:
-  - name: pip-cache
+# volumes:
+#   - name: pip-cache
 
 commands:
   - id: install-deps
