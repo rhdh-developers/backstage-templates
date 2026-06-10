@@ -17,7 +17,7 @@ projects:
 components:
   - name: python
     container:
-      image: registry.redhat.io/devspaces/udi-rhel9:3.28
+      image: quay.io/devfile/universal-developer-image:ubi9-latest
       memoryLimit: '2Gi'
       memoryRequest: '1Gi'
       cpuLimit: '2'
