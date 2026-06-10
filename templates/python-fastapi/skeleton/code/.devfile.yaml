@@ -26,9 +26,9 @@ components:
           value: "$(GITHUB_TOKEN)"
       memoryLimit: 512Mi
       mountSources: true
-      volumeMounts:
-        - name: pip-cache
-          path: /home/user/.cache/pip
+      # volumeMounts:
+      #   - name: pip-cache
+      #     path: /home/user/.cache/pip
 
 # volumes:
 #   - name: pip-cache
