@@ -48,7 +48,7 @@ spec:
         owner:
           title: Owner
           type: string
-          default: group:default/rhdh-developers
+          default: group:default/rhdh-devs
           description: Backstage owner of this component (user or group).
           ui:field: OwnerPicker
           ui:options:
