@@ -6,6 +6,9 @@ metadata:
   language: Python
   projectType: FastAPI
 
+attributes:
+  controller.devfile.io/storage-type: ephemeral
+
 projects:
   - name: ${{ values.appName }}-code
     git:
