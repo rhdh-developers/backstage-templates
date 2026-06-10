@@ -16,7 +16,7 @@ metadata:
     - tekton
     - argocd
 spec:
-  owner: group:default/rhdh-developers
+  owner: group:default/rhdh-devs
   type: service
 
   parameters:
