@@ -16,13 +16,26 @@ components:
   - name: venv
     volume:
       size: 1G
+events:
+  postStart:
+    - setup
 commands:
+  - id: setup
+    exec:
+      label: "Setup environment"
+      component: python
+      workingDir: ${PROJECTS_ROOT}/${{ values.appName }}-code
+      commandLine: |
+        python -m venv .venv
+        . .venv/bin/activate
+        pip install -r requirements.txt
+        grep -qxF 'cd $PROJECTS_ROOT/${{ values.appName }}-code && . .venv/bin/activate' /home/user/.bashrc || echo 'cd $PROJECTS_ROOT/${{ values.appName }}-code && . .venv/bin/activate' >> /home/user/.bashrc
   - id: run
     exec:
       label: "Run the application"
       component: python
       workingDir: ${PROJECTS_ROOT}/${{ values.appName }}-code
-      commandLine: python -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt && uvicorn main:app --reload --host 0.0.0.0 --port 8000
+      commandLine: . .venv/bin/activate && uvicorn main:app --reload --host 0.0.0.0 --port 8000
       group:
         kind: run
         isDefault: true
