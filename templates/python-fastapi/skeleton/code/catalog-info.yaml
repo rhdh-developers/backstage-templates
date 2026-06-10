@@ -32,6 +32,9 @@ metadata:
     - url: https://${{ values.appName }}.${{ values.gateway }}/docs
       title: API Docs
       icon: api
+    - url: https://devspaces.${{ values.cluster_app_domain }}/?storageType=per-workspace#https://github.com/${{ values.githubOrg }}/${{ values.appName }}-code
+      title: OpenShift Dev Spaces
+      icon: web
 spec:
   type: service
   lifecycle: experimental

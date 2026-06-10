@@ -28,6 +28,7 @@ spec:
         - namespace
         - argoInstance
         - gateway
+        - cluster_app_domain
       properties:
         appName:
           title: Application Name
@@ -85,6 +86,10 @@ spec:
           enumNames:
             - 'demo.leonlevy.lol (prod-gateway)'
             - 'example.leonlevy.lol (example-gateway)'
+        cluster_app_domain:
+          title: Your Cluster App Domain
+          type: string
+          description: something like 'apps.org-domain'
 
   steps:
     # -------------------------------------------------------------------------
@@ -103,6 +108,7 @@ spec:
           namespace: ${{ parameters.namespace }}
           argoInstance: ${{ parameters.argoInstance }}
           gateway: ${{ parameters.gateway }}
+          cluster_app_domain: ${{ parameters.cluster_app_domain }}
 
     # -------------------------------------------------------------------------
     # 2. Render k8s/gitops skeleton into ./k8 workspace directory
