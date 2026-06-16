@@ -17,6 +17,7 @@ metadata:
     che.eclipse.org/devfile-url: https://github.com/${{ values.githubOrg }}/${{ values.appName }}-code/blob/main/.devfile.yaml
     # Source code location for Backstage
     backstage.io/source-location: url:https://github.com/${{ values.githubOrg }}/${{ values.appName }}-code
+    backstage.io/techdocs-ref: url:https://github.com/${{ values.githubOrg }}/${{ values.appName }}-code
     # GitHub repos for SCM links
     github.com/project-slug: ${{ values.githubOrg }}/${{ values.appName }}-code
   links:
