@@ -183,62 +183,7 @@ spec:
         labelValue: ${{ parameters.appName }}
 
     # -------------------------------------------------------------------------
-    # 6. Trigger initial PipelineRun to build and push the container image
-    # -------------------------------------------------------------------------
-    - id: trigger-pipeline
-      name: Trigger Initial Pipeline Run
-      action: kubernetes:apply
-      input:
-        namespaced: true
-        namespace: ${{ parameters.namespace }}
-        manifest:
-          apiVersion: tekton.dev/v1
-          kind: PipelineRun
-          metadata:
-            generateName: ${{ parameters.appName }}-initial-
-            namespace: ${{ parameters.namespace }}
-            labels:
-              app.kubernetes.io/instance: ${{ parameters.appName }}
-              app.kubernetes.io/name: ${{ parameters.appName }}
-              pipeline.openshift.io/runtime: nodejs
-              pipeline.openshift.io/runtime-version: 22-minimal-ubi10
-              pipeline.openshift.io/type: kubernetes
-              tekton.dev/pipeline: ${{ parameters.appName }}
-          spec:
-            pipelineRef:
-              name: ${{ parameters.appName }}
-            params:
-              - name: APP_NAME
-                value: ${{ parameters.appName }}
-              - name: GIT_REPO
-                value: ${{ steps['publish-code'].output.remoteUrl }}
-              - name: GIT_REVISION
-                value: main
-              - name: IMAGE_NAME
-                value: image-registry.openshift-image-registry.svc:5000/${{ parameters.namespace }}/${{ parameters.appName }}
-              - name: PATH_CONTEXT
-                value: .
-              - name: VERSION
-                value: 22-minimal-ubi10
-            taskRunTemplate:
-              serviceAccountName: pipeline
-            timeouts:
-              pipeline: 1h0m0s
-            workspaces:
-              - name: workspace
-                volumeClaimTemplate:
-                  metadata:
-                    labels:
-                      tekton.dev/pipeline: ${{ parameters.appName }}
-                  spec:
-                    accessModes:
-                      - ReadWriteOnce
-                    resources:
-                      requests:
-                        storage: 1Gi
-
-    # -------------------------------------------------------------------------
-    # 7. Register catalog component
+    # 6. Register catalog component
     # -------------------------------------------------------------------------
     - id: register-catalog
       name: Register in Backstage Catalog
@@ -271,11 +216,54 @@ spec:
           creating the Deployment, ConfigMap (with your LLM settings), Service, Route, and
           Tekton Pipeline.
 
-          The initial PipelineRun has been submitted to build and push the container image.
-          Once the build completes, the Deployment will roll out automatically.
+          **Trigger the initial build** — once ArgoCD has synced the Pipeline, run:
+          ```
+          oc create -f - <<EOF
+          apiVersion: tekton.dev/v1
+          kind: PipelineRun
+          metadata:
+            generateName: ${{ parameters.appName }}-
+            namespace: ${{ parameters.namespace }}
+            labels:
+              tekton.dev/pipeline: ${{ parameters.appName }}
+          spec:
+            pipelineRef:
+              name: ${{ parameters.appName }}
+            params:
+              - name: APP_NAME
+                value: ${{ parameters.appName }}
+              - name: GIT_REPO
+                value: ${{ steps['publish-code'].output.remoteUrl }}
+              - name: GIT_REVISION
+                value: main
+              - name: IMAGE_NAME
+                value: image-registry.openshift-image-registry.svc:5000/${{ parameters.namespace }}/${{ parameters.appName }}
+              - name: PATH_CONTEXT
+                value: .
+              - name: VERSION
+                value: 22-minimal-ubi10
+            taskRunTemplate:
+              serviceAccountName: pipeline
+            timeouts:
+              pipeline: 1h0m0s
+            workspaces:
+              - name: workspace
+                volumeClaimTemplate:
+                  spec:
+                    accessModes:
+                      - ReadWriteOnce
+                    resources:
+                      requests:
+                        storage: 1Gi
+          EOF
+          ```
 
-          **Your app's Route** will be created by OpenShift in namespace `${{ parameters.namespace }}`.
-          Check it with:
+          Alternatively, use the k8s manifests repo's `pipeline-run.yaml`:
+          ```
+          oc create -f pipeline-run.yaml -n ${{ parameters.namespace }}
+          ```
+
+          **Your app's Route** will be available after the build completes:
           ```
           oc get route ${{ parameters.appName }} -n ${{ parameters.namespace }}
           ```

@@ -1,0 +1,44 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: ${{ values.appName }}-
+  namespace: ${{ values.namespace }}
+  labels:
+    app.kubernetes.io/instance: ${{ values.appName }}
+    app.kubernetes.io/name: ${{ values.appName }}
+    pipeline.openshift.io/runtime: nodejs
+    pipeline.openshift.io/runtime-version: 22-minimal-ubi10
+    pipeline.openshift.io/type: kubernetes
+    tekton.dev/pipeline: ${{ values.appName }}
+spec:
+  pipelineRef:
+    name: ${{ values.appName }}
+  params:
+  - name: APP_NAME
+    value: ${{ values.appName }}
+  - name: GIT_REPO
+    value: ${{ values.gitlabUrl }}/${{ values.gitlabGroup }}/${{ values.appName }}-code.git
+  - name: GIT_REVISION
+    value: main
+  - name: IMAGE_NAME
+    value: image-registry.openshift-image-registry.svc:5000/${{ values.namespace }}/${{ values.appName }}
+  - name: PATH_CONTEXT
+    value: .
+  - name: VERSION
+    value: 22-minimal-ubi10
+  taskRunTemplate:
+    serviceAccountName: pipeline
+  timeouts:
+    pipeline: 1h0m0s
+  workspaces:
+  - name: workspace
+    volumeClaimTemplate:
+      metadata:
+        labels:
+          tekton.dev/pipeline: ${{ values.appName }}
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
