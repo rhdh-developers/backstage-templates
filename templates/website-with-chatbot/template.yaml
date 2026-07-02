@@ -177,6 +177,7 @@ spec:
       input:
         appName: ${{ parameters.appName }}
         argoInstance: ${{ parameters.argoInstance }}
+        projectName: default
         namespace: rhdh-gitops
         repoUrl: ${{ steps['publish-k8'].output.remoteUrl }}.git
         path: k8
