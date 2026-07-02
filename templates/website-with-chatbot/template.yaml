@@ -30,7 +30,6 @@ spec:
         - gitlabGroup
         - owner
         - namespace
-        - argoInstance
       properties:
         appName:
           title: Application Name
@@ -73,14 +72,6 @@ spec:
             OpenShift project where this app's workloads are deployed. ArgoCD will
             create the namespace automatically via CreateNamespace=true.
           pattern: '^[a-z][a-z0-9-]{1,28}[a-z0-9]$'
-        argoInstance:
-          title: RHDH ArgoCD Instance Name
-          type: string
-          default: main
-          description: >
-            Must match argocd.appLocatorMethods.instances[].name in Developer Hub config.
-          ui:help: Case-sensitive. This hub uses the instance name `main`.
-
     - title: LLM Configuration
       required:
         - llmEndpoint
@@ -169,18 +160,19 @@ spec:
         repoVisibility: public
 
     # -------------------------------------------------------------------------
-    # 5. Create ArgoCD Application — syncs k8 repo into the app namespace
+    # 5. Create bootstrap ArgoCD Application (app-of-apps pattern)
+    #    Points to k8/argocd/ which contains the actual Application manifest
+    #    using project: default. The bootstrap project only needs rhdh-gitops.
     # -------------------------------------------------------------------------
     - id: create-argocd-app
-      name: Create ArgoCD Application
+      name: Create ArgoCD Bootstrap Application
       action: argocd:create-resources
       input:
-        appName: ${{ parameters.appName }}
-        argoInstance: ${{ parameters.argoInstance }}
-        projectName: default
+        appName: ${{ parameters.appName }}-bootstrap
+        argoInstance: main
         namespace: rhdh-gitops
         repoUrl: ${{ steps['publish-k8'].output.remoteUrl }}.git
-        path: k8
+        path: k8/argocd
         labelValue: ${{ parameters.appName }}
 
     # -------------------------------------------------------------------------
@@ -213,9 +205,11 @@ spec:
           **LLM Model:** `${{ parameters.llmModel }}`
           **LLM Endpoint:** `${{ parameters.llmEndpoint }}`
 
-          ArgoCD will sync the k8s manifests repo into namespace `${{ parameters.namespace }}`,
-          creating the Deployment, ConfigMap (with your LLM settings), Service, Route, and
-          Tekton Pipeline.
+          A bootstrap ArgoCD Application (`${{ parameters.appName }}-bootstrap`) has been created
+          in `rhdh-gitops`. It syncs the `k8/argocd/` directory, which registers the actual
+          ArgoCD Application using `project: default`. That app then syncs all manifests into
+          namespace `${{ parameters.namespace }}`, creating the Deployment, ConfigMap (with your
+          LLM settings), Service, Route, and Tekton Pipeline.
 
           **Trigger the initial build** — once ArgoCD has synced the Pipeline, run:
           ```
