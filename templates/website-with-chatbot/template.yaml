@@ -76,10 +76,10 @@ spec:
         argoInstance:
           title: RHDH ArgoCD Instance Name
           type: string
-          default: default
+          default: rhdh-gitops
           description: >
             Must match argocd.appLocatorMethods.instances[].name in Developer Hub config.
-          ui:help: Case-sensitive. This hub typically uses the instance name `default`.
+          ui:help: Case-sensitive. This hub uses the instance name `rhdh-gitops`.
 
     - title: LLM Configuration
       required:
