@@ -1,0 +1,18 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.appName }}
+  title: ${{ values.appName }}
+  description: Node.js website with LLM-powered chatbot
+  annotations:
+    gitlab.com/project-slug: ${{ values.gitlabGroup }}/${{ values.appName }}-code
+    backstage.io/source-location: url:${{ values.gitlabUrl }}/${{ values.gitlabGroup }}/${{ values.appName }}-code
+    backstage.io/kubernetes-id: ${{ values.appName }}
+    backstage.io/kubernetes-namespace: ${{ values.namespace }}
+    argocd/app-name: ${{ values.appName }}
+    tekton.dev/ci-pipeline: ${{ values.appName }}
+spec:
+  type: service
+  lifecycle: production
+  owner: ${{ values.owner }}
+  system: ${{ values.appName }}

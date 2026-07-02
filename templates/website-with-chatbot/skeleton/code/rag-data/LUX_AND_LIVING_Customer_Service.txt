@@ -1,0 +1,629 @@
+================================================================================
+LUX & LIVING - CUSTOMER SERVICE AND SUPPORT GUIDE
+================================================================================
+
+================================================================================
+CONTACT INFORMATION
+================================================================================
+
+CUSTOMER SERVICE DEPARTMENT
+
+Main Customer Service Line
+Phone: 1-800-LUX-LIVE (1-800-589-5483)
+Hours: Mon-Fri 8:00 AM - 10:00 PM EST
+       Sat 9:00 AM - 9:00 PM EST
+       Sun 10:00 AM - 8:00 PM EST
+Wait Time: Average 2-5 minutes
+Supported Languages: English, Spanish, French
+
+Email Support
+Address: support@luxandliving.com
+Response Time: Within 24 hours (business days)
+Include: Order number, issue description, photos if applicable
+Best For: Non-urgent issues, detailed explanations, documentation
+
+Live Chat
+Website: www.luxandliving.com (chat icon bottom right)
+Hours: Same as phone customer service
+Response Time: Typically 1-3 minutes during business hours
+Best For: Quick questions, order status, simple issues
+
+Social Media
+Instagram: @luxandlivingofficial
+Facebook: @luxandliving
+Response Time: 24-48 hours
+Best For: Feedback, sharing experiences, non-urgent inquiries
+Note: Not monitored for urgent issues - use phone/email instead
+
+================================================================================
+DEPARTMENT-SPECIFIC CONTACTS
+================================================================================
+
+ORDERS AND SHIPPING
+Email: orders@luxandliving.com
+Phone: 1-800-589-5483, extension 1
+Hours: Mon-Fri 8 AM-10 PM EST, Sat 9 AM-9 PM EST, Sun 10 AM-8 PM EST
+Best For: Order status, shipping information, delivery issues
+
+RETURNS AND EXCHANGES
+Email: returns@luxandliving.com
+Phone: 1-800-589-5483, extension 2
+Hours: Mon-Fri 8 AM-10 PM EST, Sat 9 AM-9 PM EST, Sun 10 AM-8 PM EST
+Return Authorization: Required for all returns
+Processing: Typical return: 5-7 business days
+
+WARRANTY CLAIMS
+Email: warranty@luxandliving.com
+Phone: 1-800-589-5483, extension 3
+Hours: Mon-Fri 8 AM-10 PM EST, Sat 9 AM-9 PM EST, Sun 10 AM-8 PM EST
+Documentation: Order number, purchase date, photos of issue
+Processing: 2-3 business days typical assessment
+
+DESIGN CONSULTATION
+Email: design@luxandliving.com
+Phone: (206) 555-0150
+Hours: Mon-Fri 10 AM-6 PM PST
+Service Fee: $150 (waived for orders $5,000+)
+Virtual Consultations: Available via Zoom/video call
+In-Person: At flagship showrooms (Seattle, NY, LA)
+
+INTERNATIONAL ORDERS
+Email: international@luxandliving.com
+Phone: (206) 555-0150
+Hours: Mon-Fri 8 AM-6 PM PST
+Specialties: Customs, duties, international shipping, delivery
+
+BUSINESS/WHOLESALE
+Email: business@luxandliving.com
+Phone: (206) 555-0150
+Hours: Mon-Fri 9 AM-5 PM PST
+Services: Volume pricing, Net 30/60 terms, design services
+Contact: Dedicated account manager assigned
+
+BILLING AND PAYMENTS
+Email: billing@luxandliving.com
+Phone: 1-800-589-5483, extension 4
+Hours: Mon-Fri 8 AM-6 PM EST
+Services: Payment issues, invoices, refund status, financing
+
+ACCESSIBILITY AND SPECIAL NEEDS
+Email: accessibility@luxandliving.com
+Phone: (206) 555-0182
+TDD/TTY: 1-800-589-5483
+ASL Video Relay: Available by request
+Services: Accessible shopping assistance, information in alternative formats
+
+================================================================================
+CUSTOMER SERVICE STANDARDS
+================================================================================
+
+RESPONSE TIME COMMITMENTS
+
+Phone Support
+- Average wait: Less than 5 minutes
+- Hold time limit: 30 minutes (callback option offered)
+- First-call resolution rate: 80%+
+- Escalation: Available for complex issues
+
+Email Support
+- Standard response: Within 24 hours
+- Complex issues: Within 48 hours
+- Follow-up: Sent if issue unresolved
+- Escalation: To supervisor if requested
+
+Live Chat
+- Response time: 1-3 minutes during hours
+- First message: Usually within 2 minutes
+- Issue resolution: Same session or escalation
+- Transcript: Emailed after chat ends
+
+Social Media
+- Response time: 24-48 hours
+- Monitoring: Business hours primarily
+- Escalation: Directed to support channels for urgent issues
+- Note: Social media monitored for feedback, not primary support
+
+QUALITY STANDARDS
+
+Courtesy and Professionalism
+- All representatives trained in customer service excellence
+- Respectful communication required
+- Multilingual support available
+- Patient, empathetic approach
+
+Knowledge and Expertise
+- Product knowledge: Comprehensive
+- Policy expertise: All team members trained
+- Problem-solving: Creative solutions encouraged
+- Escalation: Available for complex issues
+
+Issue Resolution
+- First-contact resolution: Prioritized
+- Follow-up: If unresolved, assigned to specialist
+- Timeframe: Typically resolved within 1-3 business days
+- Satisfaction: Follow-up if complicated issue
+
+ACCESS AND ACCOMMODATIONS
+
+Accessibility
+- Website ADA compliant
+- Keyboard navigation: Full support
+- Screen reader compatible: Tested with NVDA, JAWS
+- Large text: Font size adjustable
+- TTY/TDD: Available for phone communication
+
+Language Support
+- English: Primary language
+- Spanish: Full customer service support
+- French: Full customer service support
+- Other languages: Basic support, translator services available
+
+Special Accommodations
+- Print materials: Available in large print or braille
+- Audio descriptions: Product information available
+- Video captions: All tutorials captioned
+- Accommodation request: Email accessibility@luxandliving.com
+
+================================================================================
+POLICIES AND PROCEDURES
+================================================================================
+
+PRIVACY POLICY SUMMARY
+
+Information Collected
+- Contact information: Name, email, phone, address
+- Order information: Purchase history, preferences
+- Technical information: Browser type, IP address, cookies
+- Communications: Emails, chat transcripts (retained 90 days)
+
+Use of Information
+- Order fulfillment: Processing and delivery
+- Customer service: Supporting your inquiries
+- Marketing: Promotional emails (opt-in)
+- Analytics: Website improvement, usage patterns
+
+Data Security
+- Encryption: SSL/TLS on all pages
+- Payment: PCI-DSS compliant
+- Storage: Secure servers, access restricted
+- Retention: Typically 7 years for financial records
+
+Third-Party Sharing
+- Service providers: Shipping, payment processing
+- No selling: Customer data never sold to third parties
+- Business partners: Limited to fulfillment needs
+- Legal: Only as required by law
+
+Your Rights
+- Access: View your data anytime in account
+- Correction: Update information in account settings
+- Deletion: Request account deletion (some data retained per law)
+- Opt-out: Unsubscribe from emails anytime
+
+Full Privacy Policy: www.luxandliving.com/privacy
+
+COOKIES AND TRACKING
+
+Essential Cookies
+- Session management: Keep you logged in
+- Security: Fraud prevention
+- Site functionality: Shopping cart, preferences
+- Non-negotiable: Required for site function
+
+Preference Cookies
+- Language/region: Remembers your selections
+- Display: Saved preferences for how you view site
+- Opt-out: Can disable in browser settings
+
+Analytics Cookies
+- Usage statistics: Understand how site is used
+- Performance: Identify issues and improvements
+- No personal data: Anonymized tracking
+- Opt-out: Available through cookie preferences
+
+Marketing Cookies
+- Third-party ads: Track interests for targeted ads
+- Remarketing: Show relevant ads on other sites
+- Social media: Integration with platforms
+- Opt-out: Via preferences or opt-out links
+
+Cookie Management
+- Cookie settings: Customize in account preferences
+- Browser settings: Disable cookies browser-wide
+- Third-party opt-out: Links provided on website
+- "Do Not Track": Honored where applicable
+
+TERMS OF SERVICE (KEY POINTS)
+
+Account Responsibility
+- You: Responsible for account and password security
+- We: Not liable for unauthorized access with valid credentials
+- Changes: Notify us of unauthorized use immediately
+- Age: Must be 18+ to create account and purchase
+
+Prohibited Activities
+- Illegal use: Cannot use site for illegal purposes
+- Abuse: No harassment, defamation, or threats
+- Fraud: No misrepresentation for purchases or returns
+- Reverse engineering: Cannot attempt to hack or access systems
+- Spam: Cannot use for spam or mass communications
+
+Intellectual Property
+- Trademarks: Cannot use Lux & Living trademarks without permission
+- Content: Cannot reproduce website content without permission
+- User content: You retain rights to your reviews/posts
+- License: Limited license to use website for shopping
+
+Limitation of Liability
+- Disclaimer: Site "as-is" without warranties
+- Maximum liability: Limited to amount paid for product
+- Excluded: Consequential, indirect, special damages
+- Exception: Not applicable to personal injury or fraud
+
+Indemnification
+- You agree: To indemnify Lux & Living for claims
+- Claims: Arising from your use of site or violation of terms
+- Defense: Including attorney's fees
+
+DISPUTE RESOLUTION
+
+Informal Resolution (First Step)
+1. Contact customer service with issue
+2. Provide detailed description and documentation
+3. Allow 24-48 hours for response
+4. Work toward mutually acceptable resolution
+5. Most issues resolved at this stage
+
+Formal Complaint Process (If Informal Fails)
+1. Submit written complaint to support@luxandliving.com
+2. Include: Order number, issue details, resolution sought
+3. Reference: Mention attempted informal resolution
+4. Response: Within 3-5 business days
+5. Escalation: To management if needed
+
+Third-Party Dispute Resolution
+- BBB: File complaint at bbb.org (A+ rated)
+- Chargeback: Through your credit card company
+- Mediation: Available for complex disputes
+- Arbitration: Binding arbitration as per terms
+
+Escalation Procedures
+Level 1: Customer Service Representative
+- Authority: Policy interpretation, limited exceptions
+- Timeframe: 24 hours
+
+Level 2: Customer Service Manager
+- Authority: Limited discretionary decisions
+- Timeframe: 24-48 hours
+
+Level 3: Director of Customer Service
+- Authority: Significant exceptions and accommodations
+- Timeframe: 2-3 business days
+
+Small Claims Court / Legal Action
+- Available: If dispute unresolved
+- Jurisdiction: Where you reside or where Lux & Living is located
+- Costs: You responsible for own legal costs
+- Arbitration clause: May apply per terms (consult lawyer)
+
+COMPLAINT ESCALATION
+
+When to Escalate
+- Unresolved after 24 hours
+- Multiple issues with same order
+- Safety concern with product
+- Policy interpretation dispute
+- Unsatisfactory response
+
+How to Request Escalation
+- Mention: "I would like to escalate this to a manager"
+- Phone: Press option 5 for escalation
+- Email: Use subject line "ESCALATION REQUEST"
+- Chat: Request escalation from representative
+
+Management Review
+- Assignment: Escalated to appropriate manager
+- Review: Full case history reviewed
+- Contact: Direct communication from manager
+- Timeline: Response within 24-48 hours
+- Authority: Can offer exceptions and accommodations
+
+FEEDBACK AND SURVEYS
+
+Customer Feedback
+- Feedback form: Available on website
+- Post-purchase survey: Sent via email
+- Net Promoter Score: Regular satisfaction tracking
+- Open-ended comments: Encouraged and valued
+
+Use of Feedback
+- Improvements: Product and service enhancements
+- Training: Staff training based on feedback
+- Policy changes: Feedback informs policy review
+- Transparency: Summary reports published annually
+
+Review Sites
+- Google Reviews: Leave feedback on Google
+- Trustpilot: Independent review platform
+- Yelp: For physical showroom reviews
+- Facebook: Leave reviews on Facebook page
+- Better Business Bureau: BBB.org
+
+Review Guidelines
+- Honest feedback: Appreciated regardless of rating
+- Personal experience: Share your authentic experience
+- Specific examples: Details help us improve
+- Respectful tone: Professional communication valued
+- Removed reviews: Only for violations (spam, abuse, false claims)
+
+================================================================================
+FREQUENTLY CONTACTED DEPARTMENTS
+================================================================================
+
+QUESTIONS BY CATEGORY
+
+"I need to return an item"
+→ Contact: returns@luxandliving.com or ext 2
+→ Needed: Order number, reason for return
+→ Timeline: 60-day return window
+
+"Where is my order?"
+→ Contact: orders@luxandliving.com or ext 1
+→ Needed: Order number or email
+→ Self-service: Check account or tracking email
+
+"My item arrived damaged"
+→ Contact: support@luxandliving.com
+→ Needed: Photos of damage, order number
+→ Timeline: Report within 48 hours
+
+"I have a warranty question"
+→ Contact: warranty@luxandliving.com or ext 3
+→ Needed: Order number, warranty type
+→ Timeline: 2-3 day assessment
+
+"I want design help choosing furniture"
+→ Contact: design@luxandliving.com
+→ Needed: Budget, style preferences, space info
+→ Timeline: Virtual consultation within 1 week
+
+"Can I get a bulk/corporate discount?"
+→ Contact: business@luxandliving.com
+→ Needed: Order details, usage information
+→ Timeline: Quote within 2 business days
+
+"I need to update my order"
+→ Contact: orders@luxandliving.com or ext 1
+→ Timeline: Must act before shipment (typically 2 hours)
+
+"I was charged incorrectly"
+→ Contact: billing@luxandliving.com or ext 4
+→ Needed: Order number, charge details
+→ Timeline: Investigation within 3-5 business days
+
+================================================================================
+QUALITY ASSURANCE AND FEEDBACK
+================================================================================
+
+QUALITY CONTROL MEASURES
+
+Product Inspection
+- Manufacturing: 100% quality check before shipment
+- Defects: Immediate replacement or refund
+- Damage during shipment: Inspection upon arrival
+- Customer report: Investigated thoroughly
+
+Customer Service Quality
+- Call recording: Recorded for quality assurance (with consent)
+- Mystery shopping: Regular third-party evaluations
+- Customer surveys: Post-interaction feedback
+- Performance metrics: Tracked and reviewed
+
+Website Quality
+- Uptime: 99.9% target uptime
+- Performance: Page load time under 2 seconds
+- Security: Regular security audits
+- Accessibility: Quarterly compliance checks
+
+HANDLING COMPLAINTS ABOUT SERVICE
+
+Reporting Poor Service
+- Specific details: Date, time, representative name
+- What happened: Detailed description of incident
+- Expected resolution: What would satisfy you
+- Contact: support@luxandliving.com with subject "Service Complaint"
+
+Investigation Process
+1. Document review: All records pulled
+2. Representative interview: Their account of incident
+3. Policy review: Determine if policy violation occurred
+4. Your follow-up: Additional questions if needed
+5. Resolution: Offered within 3-5 business days
+
+Possible Outcomes
+- Apology: Acknowledgment of service failure
+- Compensation: Discount, refund, or account credit
+- Training: Representative receives additional training
+- Process improvement: Policy changes if systemic issue
+- Escalation: To management if severity warrants
+
+SUGGESTIONS AND IMPROVEMENTS
+
+How to Make Suggestions
+- Customer feedback form: On website
+- Email: support@luxandliving.com with "SUGGESTION"
+- Phone: Ask to speak with manager
+- Social media: Direct message @luxandlivingofficial
+
+What We Listen For
+- Process improvements: Easier, faster experiences
+- Product additions: New items or styles to carry
+- Feature requests: Website/app enhancements
+- Service improvements: Better support options
+- Policy changes: More customer-friendly approaches
+
+Recognition
+- Implemented suggestions: Credited to customer when appropriate
+- Acknowledgment: Email thanks for valuable feedback
+- Rewards: $25 gift card for selected suggestions
+- Featured: Spotlight in customer newsletters (with permission)
+
+================================================================================
+SELF-SERVICE SUPPORT OPTIONS
+================================================================================
+
+ONLINE ACCOUNT MANAGEMENT
+
+Account Dashboard
+- Orders: View all past and current orders
+- Tracking: Real-time shipping information
+- Returns: Initiate and track returns
+- Profile: Update contact and payment information
+- Preferences: Manage communication preferences
+- Rewards: View loyalty points balance
+- Wishlist: Save items for later
+
+Mobile App (iOS and Android)
+- Download: Free from App Store or Google Play
+- Features: Same as website plus exclusive app deals
+- Notifications: Real-time order updates
+- Augmented reality: Visualize furniture in your space
+- Reviews: Browse customer reviews in-app
+
+ONLINE HELP RESOURCES
+
+Knowledge Base
+- URL: www.luxandliving.com/help
+- Topics: 500+ articles covering all common questions
+- Search: Searchable by keyword or topic
+- Video: Embedded videos for visual learners
+- Updated: Regularly with new information
+
+Video Tutorials
+- Assembly: Step-by-step assembly videos for all items
+- Care: Product care and maintenance videos
+- Design: Interior design and styling tips
+- Troubleshooting: Solutions to common issues
+- Platform: YouTube channel + website
+
+FAQ Pages
+- By category: Organized by topic (shipping, returns, etc.)
+- Search: Keyword searchable
+- Recently updated: Updated weekly with new questions
+- Trending: Popular questions highlighted
+
+Blog
+- Design tips: Interior design advice
+- Care guides: Product maintenance and longevity
+- Trends: Current furniture and design trends
+- Customer stories: Feature customer home tours
+- Updates: Company news and announcements
+
+AUTOMATED SUPPORT
+
+Email Notifications
+- Order confirmation: Immediate upon purchase
+- Shipment notification: Tracking provided
+- Delivery notification: Confirmation upon delivery
+- Return label: Emailed upon return initiation
+- Refund confirmation: Notified when refund processed
+
+SMS Alerts (Opt-in)
+- Delivery updates: One-hour delivery windows
+- Inventory alerts: When back-ordered items return
+- Promotional: Special offers and sales (can unsubscribe)
+- Account: Security alerts for account changes
+
+Chatbot Support (AI Assistant)
+- Availability: 24/7 on website
+- Limitations: Basic questions only
+- Escalation: To human agent if needed
+- Common questions: Fastest resolution
+- Handoff: Seamless transfer to representative
+
+================================================================================
+ACCESSIBILITY SUPPORT
+================================================================================
+
+ACCESSIBILITY SERVICES
+
+Website Accessibility
+- WCAG 2.1 Level AA: Standard we aim to meet
+- Screen readers: Compatible with JAWS, NVDA, VoiceOver
+- Keyboard navigation: Full site accessible via keyboard
+- Color contrast: Meets WCAG standards
+- Text alternatives: Alt-text on all images
+
+Document Accessibility
+- PDF files: Tagged and accessible
+- Forms: Properly labeled and navigable
+- Tables: Properly structured and accessible
+- Links: Descriptive link text provided
+- Downloads: Alternative formats available
+
+Video Accessibility
+- Captions: All videos captioned
+- Audio descriptions: Available for product videos
+- Transcript: Provided with each video
+- Platform: Accessible video player used
+- Subtitles: Multiple language options
+
+Specialized Communication
+- TTY/TDD: Phone support available
+- ASL Interpreter: Video relay services available
+- Large print materials: Available by request
+- Braille: Materials available by request
+- Audio format: Phone support for written materials
+
+ACCOMMODATIONS
+
+Mobility Accommodations
+- Showrooms: Wheelchair accessible (all locations)
+- Parking: Accessible parking available
+- Restrooms: ADA-compliant facilities
+- Seating: Accessible seating in showrooms
+- Assistance: Personal shopper assistance available
+
+Vision Accommodations
+- Product images: Detailed descriptions provided
+- Sizing: Dimensions provided in clear format
+- Color options: Described comprehensively
+- Samples: Available by mail (fabric, leather, finishes)
+- Consultation: Design consultation with detailed descriptions
+
+Hearing Accommodations
+- Telephone: TTY/TDD service available
+- Video calls: Interpreter available
+- Captions: All videos captioned
+- Email: Primary communication method available
+- Support: Written communication prioritized
+
+Cognitive Accommodations
+- Simplified language: Available upon request
+- Support person: Allowed during consultations
+- Extended time: For decision-making
+- Guidance: Detailed assistance with process
+- Documentation: Clear written instructions provided
+
+REQUEST ACCOMMODATIONS
+
+How to Request
+- Email: accessibility@luxandliving.com
+- Phone: (206) 555-0182
+- Online: "Request Accommodation" link on website
+- In-person: Ask any showroom staff member
+- Notice: Advance notice helps us prepare (48 hours ideal)
+
+What to Include
+- Type of accommodation needed
+- When you need it (date/time if applicable)
+- Any specific requirements or preferences
+- Best contact method for confirmation
+- Any questions about our services
+
+Response and Confirmation
+- Timeline: Response within 1 business day
+- Confirmation: Detailed information provided
+- Verification: Accommodations tested before use
+- Contact: Primary point of contact assigned if complex
+- Flexibility: We'll work with you to meet your needs

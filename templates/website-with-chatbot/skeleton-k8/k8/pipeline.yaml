@@ -1,0 +1,96 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  labels:
+    app.kubernetes.io/instance: ${{ values.appName }}
+    app.kubernetes.io/name: ${{ values.appName }}
+    operator.tekton.dev/operand-name: openshift-pipelines-addons
+    pipeline.openshift.io/runtime: nodejs
+    pipeline.openshift.io/runtime-version: 22-minimal-ubi10
+    pipeline.openshift.io/type: kubernetes
+  name: ${{ values.appName }}
+  namespace: ${{ values.namespace }}
+spec:
+  params:
+  - default: ${{ values.appName }}
+    name: APP_NAME
+    type: string
+  - default: ${{ values.gitlabUrl }}/${{ values.gitlabGroup }}/${{ values.appName }}-code.git
+    name: GIT_REPO
+    type: string
+  - default: ""
+    name: GIT_REVISION
+    type: string
+  - default: image-registry.openshift-image-registry.svc:5000/${{ values.namespace }}/${{ values.appName }}
+    name: IMAGE_NAME
+    type: string
+  - default: .
+    name: PATH_CONTEXT
+    type: string
+  - default: 22-minimal-ubi10
+    name: VERSION
+    type: string
+  tasks:
+  - name: fetch-repository
+    params:
+    - name: URL
+      value: $(params.GIT_REPO)
+    - name: REVISION
+      value: $(params.GIT_REVISION)
+    - name: SUBDIRECTORY
+      value: ""
+    - name: DELETE_EXISTING
+      value: "true"
+    taskRef:
+      params:
+      - name: kind
+        value: task
+      - name: name
+        value: git-clone
+      - name: namespace
+        value: openshift-pipelines
+      resolver: cluster
+    workspaces:
+    - name: output
+      workspace: workspace
+  - name: build
+    params:
+    - name: IMAGE
+      value: $(params.IMAGE_NAME)
+    - name: TLS_VERIFY
+      value: "false"
+    - name: CONTEXT
+      value: $(params.PATH_CONTEXT)
+    - name: VERSION
+      value: $(params.VERSION)
+    runAfter:
+    - fetch-repository
+    taskRef:
+      params:
+      - name: kind
+        value: task
+      - name: name
+        value: s2i-nodejs
+      - name: namespace
+        value: openshift-pipelines
+      resolver: cluster
+    workspaces:
+    - name: source
+      workspace: workspace
+  - name: deploy
+    params:
+    - name: SCRIPT
+      value: oc rollout status deploy/$(params.APP_NAME)
+    runAfter:
+    - build
+    taskRef:
+      params:
+      - name: kind
+        value: task
+      - name: name
+        value: openshift-client
+      - name: namespace
+        value: openshift-pipelines
+      resolver: cluster
+  workspaces:
+  - name: workspace

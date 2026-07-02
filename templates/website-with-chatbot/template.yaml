@@ -1,0 +1,285 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: website-with-chatbot
+  title: Node.js Website with LLM Chatbot
+  description: >
+    Creates a Node.js web application with an integrated LLM-powered chatbot.
+    Scaffolds two GitLab repos (source code and k8s manifests), an ArgoCD GitOps
+    deployment, a Tekton CI pipeline, and an OpenShift Route for ingress — no
+    gateway required.
+  tags:
+    - nodejs
+    - chatbot
+    - llm
+    - openshift
+    - gitops
+    - tekton
+    - argocd
+    - gitlab
+
+spec:
+  owner: group:default/rhdh-devs
+  type: service
+
+  parameters:
+    - title: Application Details
+      required:
+        - appName
+        - gitlabUrl
+        - gitlabGroup
+        - owner
+        - namespace
+        - argoInstance
+      properties:
+        appName:
+          title: Application Name
+          type: string
+          default: website-with-chatbot
+          description: >
+            Unique name for this app. Used for GitLab repos (<name>-code, <name>-k8),
+            ArgoCD Application, Kubernetes object names, and the OpenShift Route host.
+          pattern: '^[a-z][a-z0-9-]{1,28}[a-z0-9]$'
+          ui:autofocus: true
+        gitlabUrl:
+          title: GitLab Instance URL
+          type: string
+          default: https://gitlab-gitlab.apps.cluster-9vqpx.dynamic2.redhatworkshops.io
+          description: >
+            Base URL of your GitLab instance. Use the default for the shared cluster GitLab,
+            or enter your own instance URL.
+          ui:help: 'Example: https://gitlab-gitlab.apps.cluster-9vqpx.dynamic2.redhatworkshops.io'
+        gitlabGroup:
+          title: GitLab Group
+          type: string
+          default: parasol
+          description: GitLab group (or subgroup path) where both repos will be created.
+          ui:help: 'Example: parasol or parasol/my-subgroup'
+        owner:
+          title: Owner
+          type: string
+          default: group:default/rhdh-devs
+          description: Backstage owner of this component (user or group).
+          ui:field: OwnerPicker
+          ui:options:
+            allowedKinds:
+              - Group
+              - User
+        namespace:
+          title: OpenShift Namespace
+          type: string
+          default: luxe-living
+          description: >
+            OpenShift project where this app's workloads are deployed. ArgoCD will
+            create the namespace automatically via CreateNamespace=true.
+          pattern: '^[a-z][a-z0-9-]{1,28}[a-z0-9]$'
+        argoInstance:
+          title: RHDH ArgoCD Instance Name
+          type: string
+          default: default
+          description: >
+            Must match argocd.appLocatorMethods.instances[].name in Developer Hub config.
+          ui:help: Case-sensitive. This hub typically uses the instance name `default`.
+
+    - title: LLM Configuration
+      required:
+        - llmEndpoint
+        - llmToken
+        - llmModel
+      properties:
+        llmEndpoint:
+          title: LLM API Endpoint
+          type: string
+          default: https://maas-rhdp.apps.maas.redhatworkshops.io/v1/chat/completions
+          description: >
+            Full URL of the LLM inference endpoint (OpenAI-compatible chat completions API).
+          ui:help: 'Example: https://maas-rhdp.apps.maas.redhatworkshops.io/v1/chat/completions'
+        llmToken:
+          title: LLM Auth Token
+          type: string
+          description: Bearer token / API key for authenticating with the LLM endpoint.
+          ui:widget: password
+          ui:help: 'Example: sk-Oow_b5M_ctA8F5RVjQ65Tw'
+        llmModel:
+          title: LLM Model Name
+          type: string
+          default: llama-scout-17b
+          description: Model identifier to pass in the LLM request payload.
+          ui:help: 'Example: llama-scout-17b'
+
+  steps:
+    # -------------------------------------------------------------------------
+    # 1. Render source-code skeleton
+    # -------------------------------------------------------------------------
+    - id: fetch-code-skeleton
+      name: Render Source Code Skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton/code
+        targetPath: ./code
+        values:
+          appName: ${{ parameters.appName }}
+          gitlabUrl: ${{ parameters.gitlabUrl }}
+          gitlabGroup: ${{ parameters.gitlabGroup }}
+          owner: ${{ parameters.owner }}
+          namespace: ${{ parameters.namespace }}
+
+    # -------------------------------------------------------------------------
+    # 2. Render k8s/GitOps skeleton
+    # -------------------------------------------------------------------------
+    - id: fetch-k8-skeleton
+      name: Render K8s/GitOps Skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton-k8
+        targetPath: ./k8
+        values:
+          appName: ${{ parameters.appName }}
+          gitlabUrl: ${{ parameters.gitlabUrl }}
+          gitlabGroup: ${{ parameters.gitlabGroup }}
+          namespace: ${{ parameters.namespace }}
+          llmEndpoint: ${{ parameters.llmEndpoint }}
+          llmToken: ${{ parameters.llmToken }}
+          llmModel: ${{ parameters.llmModel }}
+
+    # -------------------------------------------------------------------------
+    # 3. Publish source-code repo to GitLab: <group>/<appName>-code
+    # -------------------------------------------------------------------------
+    - id: publish-code
+      name: Create Source Code Repository
+      action: publish:gitlab
+      input:
+        repoUrl: ${{ parameters.gitlabUrl | replace("https://", "") }}?repo=${{ parameters.appName }}-code&owner=${{ parameters.gitlabGroup }}
+        description: Source code for the ${{ parameters.appName }} chatbot application
+        defaultBranch: main
+        sourcePath: ./code
+        gitCommitMessage: "chore: initial scaffold from RHDH template"
+        repoVisibility: internal
+
+    # -------------------------------------------------------------------------
+    # 4. Publish k8s manifests repo to GitLab: <group>/<appName>-k8
+    # -------------------------------------------------------------------------
+    - id: publish-k8
+      name: Create K8s Manifests Repository
+      action: publish:gitlab
+      input:
+        repoUrl: ${{ parameters.gitlabUrl | replace("https://", "") }}?repo=${{ parameters.appName }}-k8&owner=${{ parameters.gitlabGroup }}
+        description: Kubernetes/GitOps manifests for the ${{ parameters.appName }} chatbot application
+        defaultBranch: main
+        sourcePath: ./k8
+        gitCommitMessage: "chore: initial scaffold from RHDH template"
+        repoVisibility: internal
+
+    # -------------------------------------------------------------------------
+    # 5. Create ArgoCD Application — syncs k8 repo into the app namespace
+    # -------------------------------------------------------------------------
+    - id: create-argocd-app
+      name: Create ArgoCD Application
+      action: argocd:create-resources
+      input:
+        appName: ${{ parameters.appName }}
+        argoInstance: ${{ parameters.argoInstance }}
+        namespace: ${{ parameters.namespace }}
+        repoUrl: ${{ steps['publish-k8'].output.remoteUrl }}
+        path: k8
+        labelValue: ${{ parameters.appName }}
+
+    # -------------------------------------------------------------------------
+    # 6. Trigger initial PipelineRun to build and push the container image
+    # -------------------------------------------------------------------------
+    - id: trigger-pipeline
+      name: Trigger Initial Pipeline Run
+      action: kubernetes:apply
+      input:
+        namespaced: true
+        namespace: ${{ parameters.namespace }}
+        manifest:
+          apiVersion: tekton.dev/v1
+          kind: PipelineRun
+          metadata:
+            generateName: ${{ parameters.appName }}-initial-
+            namespace: ${{ parameters.namespace }}
+            labels:
+              app.kubernetes.io/instance: ${{ parameters.appName }}
+              app.kubernetes.io/name: ${{ parameters.appName }}
+              pipeline.openshift.io/runtime: nodejs
+              pipeline.openshift.io/runtime-version: 22-minimal-ubi10
+              pipeline.openshift.io/type: kubernetes
+              tekton.dev/pipeline: ${{ parameters.appName }}
+          spec:
+            pipelineRef:
+              name: ${{ parameters.appName }}
+            params:
+              - name: APP_NAME
+                value: ${{ parameters.appName }}
+              - name: GIT_REPO
+                value: ${{ steps['publish-code'].output.remoteUrl }}
+              - name: GIT_REVISION
+                value: main
+              - name: IMAGE_NAME
+                value: image-registry.openshift-image-registry.svc:5000/${{ parameters.namespace }}/${{ parameters.appName }}
+              - name: PATH_CONTEXT
+                value: .
+              - name: VERSION
+                value: 22-minimal-ubi10
+            taskRunTemplate:
+              serviceAccountName: pipeline
+            timeouts:
+              pipeline: 1h0m0s
+            workspaces:
+              - name: workspace
+                volumeClaimTemplate:
+                  metadata:
+                    labels:
+                      tekton.dev/pipeline: ${{ parameters.appName }}
+                  spec:
+                    accessModes:
+                      - ReadWriteOnce
+                    resources:
+                      requests:
+                        storage: 1Gi
+
+    # -------------------------------------------------------------------------
+    # 7. Register catalog component
+    # -------------------------------------------------------------------------
+    - id: register-catalog
+      name: Register in Backstage Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps['publish-code'].output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+
+  output:
+    links:
+      - title: Source Code Repository
+        url: ${{ steps['publish-code'].output.remoteUrl }}
+        icon: gitlab
+      - title: K8s Manifests Repository
+        url: ${{ steps['publish-k8'].output.remoteUrl }}
+        icon: gitlab
+      - title: Open in Catalog
+        icon: catalog
+        entityRef: ${{ steps['register-catalog'].output.entityRef }}
+    text:
+      - title: What happens next
+        content: |
+          **Application:** `${{ parameters.appName }}`
+          **Namespace:** `${{ parameters.namespace }}`
+          **GitLab:** `${{ parameters.gitlabUrl }}/${{ parameters.gitlabGroup }}`
+          **LLM Model:** `${{ parameters.llmModel }}`
+          **LLM Endpoint:** `${{ parameters.llmEndpoint }}`
+
+          ArgoCD will sync the k8s manifests repo into namespace `${{ parameters.namespace }}`,
+          creating the Deployment, ConfigMap (with your LLM settings), Service, Route, and
+          Tekton Pipeline.
+
+          The initial PipelineRun has been submitted to build and push the container image.
+          Once the build completes, the Deployment will roll out automatically.
+
+          **Your app's Route** will be created by OpenShift in namespace `${{ parameters.namespace }}`.
+          Check it with:
+          ```
+          oc get route ${{ parameters.appName }} -n ${{ parameters.namespace }}
+          ```
+
+          Open the catalog component to see the Kubernetes, ArgoCD, and Tekton plugin tabs.

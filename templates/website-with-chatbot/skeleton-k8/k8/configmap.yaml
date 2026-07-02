@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ${{ values.appName }}-chat-config
+  namespace: ${{ values.namespace }}
+  labels:
+    app: ${{ values.appName }}
+data:
+  LLM_API_URL: "${{ values.llmEndpoint }}"
+  LLM_AUTH_TOKEN: "${{ values.llmToken }}"
+  LLM_CONTENT_TYPE: "application/json"
+  LLM_MODEL: "${{ values.llmModel }}"
+  LLM_SYSTEM_PROMPT: "You are a helpful customer service assistant. Answer questions politely and redirect off-topic queries back to relevant topics."

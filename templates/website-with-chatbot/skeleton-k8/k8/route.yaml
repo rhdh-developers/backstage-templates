@@ -1,0 +1,24 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app: ${{ values.appName }}
+    app.kubernetes.io/component: ${{ values.appName }}
+    app.kubernetes.io/instance: ${{ values.appName }}
+    app.kubernetes.io/name: ${{ values.appName }}
+    app.kubernetes.io/part-of: ${{ values.appName }}
+    app.openshift.io/runtime: nodejs
+    app.openshift.io/runtime-version: 22-minimal-ubi10
+  name: ${{ values.appName }}
+  namespace: ${{ values.namespace }}
+spec:
+  port:
+    targetPort: 8080-tcp
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: ${{ values.appName }}
+    weight: 100
+  wildcardPolicy: None

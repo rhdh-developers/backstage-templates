@@ -6,4 +6,5 @@ metadata:
 spec:
   targets:
     - ./templates/python-fastapi/template.yaml
-  
+    - ./templates/website-with-chatbot/template.yaml
+
