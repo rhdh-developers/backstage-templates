@@ -19,7 +19,7 @@ metadata:
     - gitlab
 
 spec:
-  owner: group:default/rhdh-devs
+  owner: group:default/rhdh
   type: service
 
   parameters:
