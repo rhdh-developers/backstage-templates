@@ -10,4 +10,4 @@ data:
   LLM_AUTH_TOKEN: "${{ values.llmToken }}"
   LLM_CONTENT_TYPE: "application/json"
   LLM_MODEL: "${{ values.llmModel }}"
-  LLM_SYSTEM_PROMPT: "You are a helpful customer service assistant. Answer questions politely and redirect off-topic queries back to relevant topics."
+  LLM_SYSTEM_PROMPT: "${{ values.llmSystemPrompt }}"

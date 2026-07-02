@@ -89,7 +89,6 @@ spec:
           title: LLM Auth Token
           type: string
           description: Bearer token / API key for authenticating with the LLM endpoint.
-          ui:field: Secret
           ui:help: 'Example: sk-Oow_b5M_ctA8F5RVjQ65Tw'
         llmModel:
           title: LLM Model Name
@@ -97,6 +96,14 @@ spec:
           default: llama-scout-17b
           description: Model identifier to pass in the LLM request payload.
           ui:help: 'Example: llama-scout-17b'
+        llmSystemPrompt:
+          title: LLM System Prompt
+          type: string
+          default: "You are a customer service assistant exclusively for Lux & Living. You may only answer questions related to Lux & Living products, orders, shipping, returns, and other customer service topics specific to this company. If a user asks about anything unrelated to Lux & Living — such as general knowledge, other companies, or off-topic subjects — politely decline and redirect them by saying you can only assist with Lux & Living customer service inquiries. Do not answer questions outside this scope under any circumstances."
+          description: System prompt that controls the chatbot's persona and scope.
+          ui:widget: textarea
+          ui:options:
+            rows: 6
 
   steps:
     # -------------------------------------------------------------------------
@@ -132,6 +139,7 @@ spec:
           llmEndpoint: ${{ parameters.llmEndpoint }}
           llmToken: ${{ parameters.llmToken }}
           llmModel: ${{ parameters.llmModel }}
+          llmSystemPrompt: ${{ parameters.llmSystemPrompt }}
 
     # -------------------------------------------------------------------------
     # 3. Publish source-code repo to GitLab: <group>/<appName>-code
