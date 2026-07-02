@@ -98,7 +98,7 @@ spec:
           title: LLM Auth Token
           type: string
           description: Bearer token / API key for authenticating with the LLM endpoint.
-          ui:widget: password
+          ui:field: Secret
           ui:help: 'Example: sk-Oow_b5M_ctA8F5RVjQ65Tw'
         llmModel:
           title: LLM Model Name
@@ -150,7 +150,6 @@ spec:
       action: publish:gitlab
       input:
         repoUrl: ${{ parameters.gitlabUrl | replace("https://", "") }}?repo=${{ parameters.appName }}-code&owner=${{ parameters.gitlabGroup }}
-        description: Source code for the ${{ parameters.appName }} chatbot application
         defaultBranch: main
         sourcePath: ./code
         gitCommitMessage: "chore: initial scaffold from RHDH template"
@@ -164,7 +163,6 @@ spec:
       action: publish:gitlab
       input:
         repoUrl: ${{ parameters.gitlabUrl | replace("https://", "") }}?repo=${{ parameters.appName }}-k8&owner=${{ parameters.gitlabGroup }}
-        description: Kubernetes/GitOps manifests for the ${{ parameters.appName }} chatbot application
         defaultBranch: main
         sourcePath: ./k8
         gitCommitMessage: "chore: initial scaffold from RHDH template"
