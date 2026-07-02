@@ -153,7 +153,7 @@ spec:
         defaultBranch: main
         sourcePath: ./code
         gitCommitMessage: "chore: initial scaffold from RHDH template"
-        repoVisibility: internal
+        repoVisibility: public
 
     # -------------------------------------------------------------------------
     # 4. Publish k8s manifests repo to GitLab: <group>/<appName>-k8
@@ -166,7 +166,7 @@ spec:
         defaultBranch: main
         sourcePath: ./k8
         gitCommitMessage: "chore: initial scaffold from RHDH template"
-        repoVisibility: internal
+        repoVisibility: public
 
     # -------------------------------------------------------------------------
     # 5. Create ArgoCD Application — syncs k8 repo into the app namespace
