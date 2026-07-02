@@ -76,10 +76,10 @@ spec:
         argoInstance:
           title: RHDH ArgoCD Instance Name
           type: string
-          default: rhdh-gitops
+          default: main
           description: >
             Must match argocd.appLocatorMethods.instances[].name in Developer Hub config.
-          ui:help: Case-sensitive. This hub uses the instance name `rhdh-gitops`.
+          ui:help: Case-sensitive. This hub uses the instance name `main`.
 
     - title: LLM Configuration
       required:
@@ -177,8 +177,8 @@ spec:
       input:
         appName: ${{ parameters.appName }}
         argoInstance: ${{ parameters.argoInstance }}
-        namespace: ${{ parameters.namespace }}
-        repoUrl: ${{ steps['publish-k8'].output.remoteUrl }}
+        namespace: rhdh-gitops
+        repoUrl: ${{ steps['publish-k8'].output.remoteUrl }}.git
         path: k8
         labelValue: ${{ parameters.appName }}
 
