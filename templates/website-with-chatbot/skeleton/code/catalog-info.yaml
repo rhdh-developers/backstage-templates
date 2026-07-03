@@ -11,7 +11,7 @@ metadata:
     backstage.io/kubernetes-namespace: ${{ values.namespace }}
     argocd/app-name: ${{ values.appName }}
     argocd/instance-name: main
-    tekton.dev/ci-pipeline: ${{ values.appName }}
+    janus-idp.io/tekton: ${{ values.appName }}
 spec:
   type: service
   lifecycle: production
