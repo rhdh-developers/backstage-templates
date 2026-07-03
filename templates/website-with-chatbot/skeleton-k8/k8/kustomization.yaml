@@ -6,7 +6,8 @@ namespace: ${{ values.namespace }}
 resources:
   - namespace.yaml
   - configmap.yaml
+  - pipeline.yaml
   - deployment.yaml
   - service.yaml
   - route.yaml
-  - pipeline.yaml
+  - initial-pipelinerun-hook.yaml

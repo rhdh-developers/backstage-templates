@@ -10,6 +10,8 @@ metadata:
     pipeline.openshift.io/type: kubernetes
   name: ${{ values.appName }}
   namespace: ${{ values.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   params:
   - default: ${{ values.appName }}

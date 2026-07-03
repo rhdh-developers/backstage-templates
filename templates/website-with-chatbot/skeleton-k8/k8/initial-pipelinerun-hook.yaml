@@ -1,0 +1,93 @@
+# ConfigMap holds the initial PipelineRun manifest so the trigger Job can apply it
+# without heredoc indentation issues.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ${{ values.appName }}-initial-build-manifest
+  namespace: ${{ values.namespace }}
+data:
+  pipelinerun.yaml: |
+    apiVersion: tekton.dev/v1
+    kind: PipelineRun
+    metadata:
+      name: ${{ values.appName }}-initial-build
+      namespace: ${{ values.namespace }}
+      labels:
+        app.kubernetes.io/instance: ${{ values.appName }}
+        app.kubernetes.io/name: ${{ values.appName }}
+        pipeline.openshift.io/runtime: nodejs
+        pipeline.openshift.io/runtime-version: 22-minimal-ubi10
+        pipeline.openshift.io/type: kubernetes
+        tekton.dev/pipeline: ${{ values.appName }}
+    spec:
+      pipelineRef:
+        name: ${{ values.appName }}
+      params:
+      - name: APP_NAME
+        value: ${{ values.appName }}
+      - name: GIT_REPO
+        value: ${{ values.gitlabUrl }}/${{ values.gitlabGroup }}/${{ values.appName }}-code.git
+      - name: GIT_REVISION
+        value: main
+      - name: IMAGE_NAME
+        value: image-registry.openshift-image-registry.svc:5000/${{ values.namespace }}/${{ values.appName }}
+      - name: PATH_CONTEXT
+        value: .
+      - name: VERSION
+        value: 22-minimal-ubi10
+      taskRunTemplate:
+        serviceAccountName: pipeline
+      timeouts:
+        pipeline: 1h0m0s
+      workspaces:
+      - name: workspace
+        volumeClaimTemplate:
+          metadata:
+            labels:
+              tekton.dev/pipeline: ${{ values.appName }}
+          spec:
+            accessModes:
+            - ReadWriteOnce
+            resources:
+              requests:
+                storage: 1Gi
+---
+# Job synced at wave 1 (after the Pipeline exists at wave 0).
+# CreateOnly=true + Prune=false means ArgoCD creates it once and never removes it.
+# The idempotency guard prevents re-running if the PipelineRun already exists.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ${{ values.appName }}-initial-build-trigger
+  namespace: ${{ values.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-options: CreateOnly=true,Prune=false
+spec:
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: pipeline
+      volumes:
+        - name: manifest
+          configMap:
+            name: ${{ values.appName }}-initial-build-manifest
+      containers:
+        - name: trigger
+          image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+          volumeMounts:
+            - name: manifest
+              mountPath: /config
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -e
+              if oc get pipelinerun ${{ values.appName }}-initial-build -n ${{ values.namespace }} >/dev/null 2>&1; then
+                echo "PipelineRun ${{ values.appName }}-initial-build already exists, skipping."
+                exit 0
+              fi
+              echo "Creating initial PipelineRun..."
+              oc create -f /config/pipelinerun.yaml
+              echo "Done."
