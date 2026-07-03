@@ -5,6 +5,7 @@ metadata:
   description: My organization templates
 spec:
   targets:
+    - ./catalog/system.yaml
     - ./templates/python-fastapi/template.yaml
     - ./templates/website-with-chatbot/template.yaml
 
