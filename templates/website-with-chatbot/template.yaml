@@ -72,6 +72,13 @@ spec:
             OpenShift project where this app's workloads are deployed. ArgoCD will
             create the namespace automatically via CreateNamespace=true.
           pattern: '^[a-z][a-z0-9-]{1,28}[a-z0-9]$'
+        clusterAppDomain:
+          title: Cluster App Domain
+          type: string
+          default: apps.cluster-9vqpx.dynamic2.redhatworkshops.io
+          description: >
+            Base domain for cluster apps. Used to generate the Dev Spaces link.
+          ui:help: 'Example: apps.cluster-9vqpx.dynamic2.redhatworkshops.io'
     - title: LLM Configuration
       required:
         - llmEndpoint
@@ -121,6 +128,7 @@ spec:
           gitlabGroup: ${{ parameters.gitlabGroup }}
           owner: ${{ parameters.owner }}
           namespace: ${{ parameters.namespace }}
+          clusterAppDomain: ${{ parameters.clusterAppDomain }}
 
     # -------------------------------------------------------------------------
     # 2. Render k8s/GitOps skeleton

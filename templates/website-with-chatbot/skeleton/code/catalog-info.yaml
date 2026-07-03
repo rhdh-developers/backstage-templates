@@ -12,6 +12,11 @@ metadata:
     argocd/app-name: ${{ values.appName }}
     argocd/instance-name: main
     janus-idp.io/tekton: ${{ values.appName }}
+    dev.loft.sh/open-in-dev-spaces: ${{ values.gitlabUrl }}/${{ values.gitlabGroup }}/${{ values.appName }}-code
+  links:
+    - url: https://devspaces.${{ values.clusterAppDomain }}/#${{ values.gitlabUrl }}/${{ values.gitlabGroup }}/${{ values.appName }}-code
+      title: Open in Dev Spaces
+      icon: web
 spec:
   type: service
   lifecycle: production
