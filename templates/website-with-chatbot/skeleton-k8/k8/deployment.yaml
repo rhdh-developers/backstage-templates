@@ -11,6 +11,8 @@ metadata:
     app.openshift.io/runtime-version: 22-minimal-ubi10
   name: ${{ values.appName }}
   namespace: ${{ values.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   progressDeadlineSeconds: 600
   replicas: 1
