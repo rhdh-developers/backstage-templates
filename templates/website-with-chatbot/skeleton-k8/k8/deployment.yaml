@@ -9,6 +9,7 @@ metadata:
     app.kubernetes.io/part-of: ${{ values.appName }}
     app.openshift.io/runtime: nodejs
     app.openshift.io/runtime-version: 22-minimal-ubi10
+    backstage.io/kubernetes-id: ${{ values.appName }}
   name: ${{ values.appName }}
   namespace: ${{ values.namespace }}
   annotations:
@@ -30,6 +31,7 @@ spec:
       labels:
         app: ${{ values.appName }}
         deployment: ${{ values.appName }}
+        backstage.io/kubernetes-id: ${{ values.appName }}
     spec:
       containers:
       - name: ${{ values.appName }}
