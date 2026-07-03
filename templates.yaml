@@ -6,6 +6,7 @@ metadata:
 spec:
   targets:
     - ./catalog/system.yaml
+    - ./catalog/llm-api.yaml
     - ./templates/python-fastapi/template.yaml
     - ./templates/website-with-chatbot/template.yaml
 

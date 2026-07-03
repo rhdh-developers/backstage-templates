@@ -1,0 +1,142 @@
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: luxe-living-llm-api
+  title: Luxe & Living LLM Chat API
+  description: >
+    OpenAI-compatible chat completions API powering the Luxe & Living customer
+    service chatbot. Hosted on the Red Hat MaaS (Model-as-a-Service) platform
+    and consumed by all website-with-chatbot deployments.
+  tags:
+    - llm
+    - chat
+    - maas
+    - openai-compatible
+  annotations:
+    backstage.io/external-url: https://maas-rhdp.apps.maas.redhatworkshops.io
+spec:
+  type: openapi
+  lifecycle: production
+  owner: group:default/rhdh
+  system: luxe-and-living
+  definition: |
+    openapi: 3.0.0
+    info:
+      title: Luxe & Living LLM Chat API
+      version: 1.0.0
+      description: >
+        OpenAI-compatible chat completions API served by Red Hat MaaS.
+        Accepts a conversation history and streams a model response.
+    servers:
+      - url: https://maas-rhdp.apps.maas.redhatworkshops.io/v1
+        description: Red Hat MaaS inference endpoint
+    security:
+      - bearerAuth: []
+    components:
+      securitySchemes:
+        bearerAuth:
+          type: http
+          scheme: bearer
+      schemas:
+        Message:
+          type: object
+          required:
+            - role
+            - content
+          properties:
+            role:
+              type: string
+              enum: [system, user, assistant]
+              example: user
+            content:
+              type: string
+              example: What is your return policy?
+        ChatRequest:
+          type: object
+          required:
+            - model
+            - messages
+          properties:
+            model:
+              type: string
+              example: llama-scout-17b
+            messages:
+              type: array
+              items:
+                $ref: '#/components/schemas/Message'
+            stream:
+              type: boolean
+              default: false
+              description: Stream the response as server-sent events.
+        ChatResponseChoice:
+          type: object
+          properties:
+            index:
+              type: integer
+            message:
+              $ref: '#/components/schemas/Message'
+            finish_reason:
+              type: string
+              example: stop
+        ChatResponse:
+          type: object
+          properties:
+            id:
+              type: string
+              example: chatcmpl-abc123
+            object:
+              type: string
+              example: chat.completion
+            model:
+              type: string
+              example: llama-scout-17b
+            choices:
+              type: array
+              items:
+                $ref: '#/components/schemas/ChatResponseChoice'
+            usage:
+              type: object
+              properties:
+                prompt_tokens:
+                  type: integer
+                completion_tokens:
+                  type: integer
+                total_tokens:
+                  type: integer
+    paths:
+      /chat/completions:
+        post:
+          summary: Create chat completion
+          description: >
+            Sends a conversation to the LLM and returns a response. Supports
+            streaming via server-sent events when stream=true.
+          operationId: createChatCompletion
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ChatRequest'
+                example:
+                  model: llama-scout-17b
+                  messages:
+                    - role: system
+                      content: You are a customer service assistant for Lux & Living.
+                    - role: user
+                      content: What is your return policy?
+                  stream: true
+          responses:
+            '200':
+              description: Successful completion (or stream of SSE chunks when stream=true)
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/ChatResponse'
+                text/event-stream:
+                  schema:
+                    type: string
+                    description: Server-sent event stream of completion delta chunks.
+            '401':
+              description: Missing or invalid bearer token
+            '503':
+              description: Model unavailable or endpoint not configured

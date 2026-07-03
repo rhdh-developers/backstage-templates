@@ -16,3 +16,5 @@ spec:
   lifecycle: production
   owner: ${{ values.owner }}
   system: luxe-and-living
+  consumesApis:
+    - luxe-living-llm-api
