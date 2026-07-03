@@ -19,6 +19,7 @@ data:
         pipeline.openshift.io/runtime-version: 22-minimal-ubi10
         pipeline.openshift.io/type: kubernetes
         tekton.dev/pipeline: ${{ values.appName }}
+        backstage.io/kubernetes-id: ${{ values.appName }}
     spec:
       pipelineRef:
         name: ${{ values.appName }}
