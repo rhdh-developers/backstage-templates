@@ -67,7 +67,7 @@ class ChatWidget {
 
     if (this.messages.length === 0) {
       this.addAssistantMessage(
-        "Hello! Welcome to Luxe & Living. I'm here to help with product recommendations, orders, shipping, and returns. How can I assist you today?"
+        "Hello! Welcome to Lux & Living. I'm here to help with product recommendations, orders, shipping, and returns. How can I assist you today?"
       );
     }
 

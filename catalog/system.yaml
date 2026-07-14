@@ -1,8 +1,8 @@
 apiVersion: backstage.io/v1alpha1
 kind: System
 metadata:
-  name: luxe-and-living
-  title: Luxe & Living
-  description: E-commerce platform for the Luxe & Living brand, including the storefront and LLM-powered customer service chatbot.
+  name: lux-and-living
+  title: Lux & Living
+  description: E-commerce platform for the Lux & Living brand, including the storefront and LLM-powered customer service chatbot.
 spec:
   owner: group:default/rhdh

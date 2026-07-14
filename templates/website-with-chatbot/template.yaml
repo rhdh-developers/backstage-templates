@@ -67,7 +67,7 @@ spec:
         namespace:
           title: OpenShift Namespace
           type: string
-          default: luxe-living
+          default: lux-living
           description: >
             OpenShift project where this app's workloads are deployed. ArgoCD will
             create the namespace automatically via CreateNamespace=true.

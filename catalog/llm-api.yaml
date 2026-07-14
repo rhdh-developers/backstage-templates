@@ -1,10 +1,10 @@
 apiVersion: backstage.io/v1alpha1
 kind: API
 metadata:
-  name: luxe-living-llm-api
-  title: Luxe & Living LLM Chat API
+  name: lux-living-llm-api
+  title: Lux & Living LLM Chat API
   description: >
-    OpenAI-compatible chat completions API powering the Luxe & Living customer
+    OpenAI-compatible chat completions API powering the Lux & Living customer
     service chatbot. Hosted on the Red Hat MaaS (Model-as-a-Service) platform
     and consumed by all website-with-chatbot deployments.
   tags:
@@ -18,11 +18,11 @@ spec:
   type: openapi
   lifecycle: production
   owner: group:default/rhdh
-  system: luxe-and-living
+  system: lux-and-living
   definition: |
     openapi: 3.0.0
     info:
-      title: Luxe & Living LLM Chat API
+      title: Lux & Living LLM Chat API
       version: 1.0.0
       description: >
         OpenAI-compatible chat completions API served by Red Hat MaaS.
