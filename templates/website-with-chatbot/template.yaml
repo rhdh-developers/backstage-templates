@@ -43,11 +43,11 @@ spec:
         gitlabUrl:
           title: GitLab Instance URL
           type: string
-          default: https://gitlab-gitlab.apps.cluster-qfm2h.dyn.redhatworkshops.io
+          default: https://gitlab-gitlab.apps.cluster-f9n6w.dyn.redhatworkshops.io
           description: >
             Base URL of your GitLab instance. Use the default for the shared cluster GitLab,
             or enter your own instance URL.
-          ui:help: 'Example: https://gitlab-gitlab.apps.cluster-qfm2h.dyn.redhatworkshops.io'
+          ui:help: 'Example: https://gitlab-gitlab.apps.cluster-f9n6w.dyn.redhatworkshops.io'
         gitlabGroup:
           title: GitLab Group
           type: string
@@ -75,10 +75,10 @@ spec:
         clusterAppDomain:
           title: Cluster App Domain
           type: string
-          default: apps.cluster-qfm2h.dyn.redhatworkshops.io
+          default: apps.cluster-f9n6w.dyn.redhatworkshops.io
           description: >
             Base domain for cluster apps. Used to generate the Dev Spaces link.
-          ui:help: 'Example: apps.cluster-qfm2h.dyn.redhatworkshops.io'
+          ui:help: 'Example: apps.cluster-f9n6w.dyn.redhatworkshops.io'
     - title: LLM Configuration
       required:
         - llmEndpoint
