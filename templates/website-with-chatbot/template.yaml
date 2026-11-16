@@ -75,10 +75,10 @@ spec:
         clusterAppDomain:
           title: Cluster App Domain
           type: string
-          default: apps.cluster-25gnx.dyn.redhatworkshops.io
+          default: apps.cluster-c7d65.dyn.redhatworkshops.io
           description: >
             Base domain for cluster apps. Used to generate the Dev Spaces link.
-          ui:help: 'Example: apps.cluster-25gnx.dyn.redhatworkshops.io'
+          ui:help: 'Example: apps.cluster-c7d65.dyn.redhatworkshops.io
     - title: LLM Configuration
       required:
         - llmEndpoint
@@ -96,7 +96,7 @@ spec:
           title: LLM Auth Token
           type: string
           description: Bearer token / API key for authenticating with the LLM endpoint.
-          ui:help: 'Example: sk-Oow_b5M_ctA8F5RVjQ65Tw'
+          ui:help: 'Example: sk-IKVYiZao3XhckCDdZoOmjg'
         llmModel:
           title: LLM Model Name
           type: string
