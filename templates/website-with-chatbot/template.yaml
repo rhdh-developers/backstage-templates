@@ -43,11 +43,11 @@ spec:
         gitlabUrl:
           title: GitLab Instance URL
           type: string
-          default: https://gitlab-gitlab.apps.cluster-25gnx.dyn.redhatworkshops.io
+          default: https://gitlab-gitlab.apps.cluster-c7d65.dyn.redhatworkshops.io
           description: >
             Base URL of your GitLab instance. Use the default for the shared cluster GitLab,
             or enter your own instance URL.
-          ui:help: 'Example: https://gitlab-gitlab.apps.cluster-25gnx.dyn.redhatworkshops.io'
+          ui:help: 'Example: https://gitlab-gitlab.apps.cluster-c7d65.dyn.redhatworkshops.io'
         gitlabGroup:
           title: GitLab Group
           type: string
