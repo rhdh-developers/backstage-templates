@@ -78,7 +78,7 @@ spec:
           default: apps.cluster-c7d65.dyn.redhatworkshops.io
           description: >
             Base domain for cluster apps. Used to generate the Dev Spaces link.
-          ui:help: 'Example: apps.cluster-c7d65.dyn.redhatworkshops.io
+          ui:help: 'Example: apps.cluster-c7d65.dyn.redhatworkshops.io'
     - title: LLM Configuration
       required:
         - llmEndpoint
